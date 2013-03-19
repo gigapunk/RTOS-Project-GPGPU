@@ -8,3 +8,4 @@
 *.ps
 *.pdf
 *.swp
+/RTOS project.tcp
