@@ -9,3 +9,4 @@
 *.pdf
 *.swp
 /RTOS project.tcp
+/RTOS project.tps
