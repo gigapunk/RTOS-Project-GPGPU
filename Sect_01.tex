@@ -2,13 +2,28 @@
 \section{GPGPU Introduction}
 
 GPGPU (\textit{General Purpose computation on Graphics Processor Unit}), also known as \textit{GPU Computing}, is the utilization of the graphic adapter of a personal computer to perform generic and non-graphic related computation usually handled by the CPU.\\
-Once designed and optimized specifically to perform only graphic calculations, modern GPUs are evolving into \emph{high-performances many-core} processors that can be virtually used to perform any task, and developers who port their applications to GPUs are able to achieve speedups of orders of magnitude vs. optimized CPU implementations.\cite{GPGPUORG:About}
+Once designed and optimized specifically to perform only graphic calculations, modern GPUs are evolving into \emph{high-performances many-core} processors that can be virtually used to perform any task, and developers who port their applications to GPUs are able to achieve speedups of orders of magnitude vs. optimized CPU implementations.\cite{GPGPUORG:About}\\
+The reason why GPUs are so fast has to be searched [.... ... ] GPUs were born to deal with [extensive performace request by videogame]
+Ottimizzate per fare poche e semplici operazioni su vertici e matrici, ma in PARALLELO -> parallelismo intriseco.
+GPUs have been built to exploit application parallelism, and a single graphic adapter can host hundreds, if not thousands, of cores; this translates in TeraFlops of operations per second vs. the few GigaFlops a CPU can handle alone.//
+ (incremento più alto di legge di moore?)
 
--Cos'è
--perchè
----Tabella prestazioni (CPU vs GPU)
----Crescita maggiore della legge di Moore
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/GPU_CPU_chart.eps}
+ \caption{CPU vs GPU growth rate.}
+ \label{fig:cpuvsgpu}
+\end{figurehere}
+
+
 -esempi applicativi
+Due to its parallel nature, GPU computing can be very effective for applications involving huge amount of data, especially if the data can be structured in structures like vectors and arrays.
+Parallel GPU computation can be applied in various applications and research-field, from computer vision, to mathematical simulations, to bio-informatics, often allowing to achieve in few months results that would have required years with a standard CPU-only approach (with speedups of even 250x,350x).
+
+METTERE GRAFICO DEL PAPER??
+
+As seen in TAB, GPU can offload the CPU from most of its work, but this doesn't mean that CPU performance is no longer critical. Many applications don't (and can't) map all their code to the GPU, and in certain cases the CPU can run some part of the code more effectively than the GPU.
+Furthermore, not all the code can be mapped easily and clearly on the GPU, as programming in this say can be way more difficult than programming in a standard way, it is not possible to simply "`port"' the code from the CPU to the GPU.
 -problemi: difficoltà
 
 %-----------------------------------------------------------------------------
