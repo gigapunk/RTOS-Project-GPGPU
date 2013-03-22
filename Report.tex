@@ -50,6 +50,14 @@
 \makeatletter
 \newenvironment{tablehere}{\def\@captype{table}}{}
 \newenvironment{figurehere}{\def\@captype{figure}\vspace{2ex}}{\vspace{2ex}}
+\newcounter{CLCounter}
+\newenvironment{CLCode}{\begin{quote}%
+    \refstepcounter{CLCounter}%
+  \textbf{OpenCL \arabic{CLCounter}}%
+  \quad
+}{%
+\end{quote}%
+}
 \makeatother
 
 

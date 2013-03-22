@@ -32,6 +32,20 @@ Furthermore, not all the code can be mapped easily and clearly on the GPU, as pr
 % and separate text manually
 
 In this section we'll analyze some of the basic principles behind GPGPU programming. Some of these concepts are directly related to and help to understand why GPU computing is so fast, for instance, GPUs can handle bidimensional matrices natively, while CPUs are limited to single dimension array.
+A GPU is basically a \textit{stream processor}: a \textbf{kernel} is executed over a stream of data in a monolitic fashion.
+Thanks to the GPU architecture, the data can be elaborated in parallel, and more than one kernel can be running at the same time. (VERIFICARE?)
+
+\subsubsection{Textures = Arrays}
+Due to the linear structure of memory, traditional CPUs cannot \emph{physically} create multi-dimensional array, and accessing rows and columns of a simple matrix is obtained by offsetting coordinates in a large one-dimensional array, each "`jump"' in memory translates in performance loss.
+GPUs are architectured to work natively with textures, that can be seen as two-dimensional array. One drawback is that the amount of memory on graphics adapters is limited, compared to the system RAM available to the CPU, and for this reason most of the GPUs can work only with textures of a limited size. The usual maximum size of a texture is usually 2048*2048, or 4096*4096, but modern can reach sizes of 8192*8192.
+The maximum texture size available for a certain graphic adapter can usually be retrieved by simple queries made available by the API you are using.
+
+\begin{CLCode}
+In OpenCL, you can obtain the maximum supported texture size with the \textsl{clGetDeviceInfo()} function, passing the
+\textsl{CL\_DEVICE\_IMAGE2D\_MAX\_WIDTH} and \textsl{CL\_DEVICE\_IMAGE2D\_MAX\_HEIGHT} parameters.
+\end{CLCode}
+
+We will discuss how textures are created and accessed more in deep in Section \ref{}, when we will introduce the OpenCL API.
 
 \begin{itemize}
 	\item Array \= Texture
