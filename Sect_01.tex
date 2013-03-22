@@ -104,12 +104,25 @@ By comparing the two examples, we can note two things:
 
 Since shaders are written to work with graphics ... GPU computation ... APIs that allow to work easily on data without having to write shaders directly. We will introduce some of these APIs in Section \ref{}
 
-\begin{itemize}
-	\item Array \= Texture
-	\item Kernels
-	\item Feedback
-	\item ....
-\end{itemize}
+\subsubsection{Computation and feedback}
+Keeping in mind that GPU's purpose is to draw something on screen, we cannot simply "`run"' our kernels, but we have to make the graphics adapter think that it is actually drawing something, that is, in GPU computing, "`to execute"' translates in "`\textit{to draw}"'.
+The basic operations for a simple render are:\\
+
+
+\begin{table*}
+{\footnotesize
+    \begin{tabular}{|p{0,5cm}|p{8cm}|p{8cm}|}
+				\\ \hline
+        ~  & \textbf{Drawing perspective} & \textbf{Computation perspective} \\ \hline
+        1) & Assign the input texture to a texture channel of the graphic adapter & Define the input data and passing it 	to the kernel          \\ \hline
+        2) & Setting the drawing surface & Define where the output data will be stored                 \\ \hline
+        3) & Define the quad to be drawn. The quad must fit the entire viewport and the texture must be mapped to it. & Initializing the indices and setting the bounds of the loop \\ \hline
+        4)  & Load the shader &   ~                                                          \\ \hline
+        5) & Render the quad & Iterate through data and execute the kernel. \\ \hline
+        
+    \end{tabular}}
+\end{table*}
+
 
 
 %This is a citation \cite{Norman09Learn} and here is another citation
