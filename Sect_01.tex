@@ -54,42 +54,43 @@ Since our data is stored into multi-dimensional \textbf{textures}, this texture 
 Here's an example of a simple shader written in HLSL language, it basically scan the entire texture for completely black pixels and turn them to white:
 
 {\footnotesize\begin{verbatim}
-float4 BlackToWhite(PixelShaderInput input) : COLOR0
+float4 BlackToWhite(PixelShaderInput input)
 {
-	if(input.Color.r == 0 &&
-	   input.Color.g == 0 &&
-		 input.Color.b == 0)
-		 return float4(1,1,1,1);
-	else
-		return input.Color;
+  if(input.Color.r == 0 &&
+	   input.Color.g == 0 && 
+     input.Color.b == 0)
+     return float4(1,1,1,1);
+  else
+     return input.Color;
 }
 \end{verbatim}}
 
 The same code in a traditional loop-oriented approach will be something like:
 
 {\footnotesize\begin{verbatim}
-void BlackToWhite(float input[4096][4096][4],float output* [4096][4096][4])
+void BlackToWhite(float input[4096][4096][4],
+                  float output* [4096][4096][4])
 {
-	for	(int y=0,y<4096,y++)
-		for(int x=0;x<4096;x++)
-		{
-			if(input[x][y][0] == 0 &&
-				 input[x][y][1] == 0 &&
-				 input[x][y][2] == 0)
-				{
-					*output[x][y][0] = 1;
-					*output[x][y][1] = 1;
-					*output[x][y][2] = 1;
-					*output[x][y][3] = 1;
-				}
-				else
-				{
-					*output[x][y][0] = input[x][y][0];
-					*output[x][y][1] = input[x][y][1];
-					*output[x][y][2] = input[x][y][2];
-					*output[x][y][3] = input[x][y][3];
-				}
-		}
+  for	(int y=0,y<4096,y++)
+    for(int x=0;x<4096;x++)
+    {
+      if(input[x][y][0] == 0 &&
+         input[x][y][1] == 0 &&
+         input[x][y][2] == 0)
+      {
+         *output[x][y][0] = 1;
+         *output[x][y][1] = 1;
+         *output[x][y][2] = 1;
+         *output[x][y][3] = 1;
+      }
+      else
+      {
+         *output[x][y][0] = input[x][y][0];
+         *output[x][y][1] = input[x][y][1];
+         *output[x][y][2] = input[x][y][2];
+         *output[x][y][3] = input[x][y][3];
+      }
+    }
 }
 \end{verbatim}}
 
@@ -97,14 +98,11 @@ void BlackToWhite(float input[4096][4096][4],float output* [4096][4096][4])
 By comparing the two examples, we can note two things:
 
 \begin{enumerate}
-	\item 
+	\item In the shader we do not implement any cycle, the code is iterated \emph{automatically} on every element of the input structure. Also there is no mapping between the input and the output, but only a single \textbf{return}. This because the output is automatically assigned to the same texture coordinate of the input.
+	\item Since GPU are meant to work with colors, shaders can natively work on 4 different channels at a time (RGBA), making GPU computation even more versatile and powerful.
 \end{enumerate}
 
-
-...
-OpenCL allows to write Kernels directly without having to write shaders...
-
-
+Since shaders are written to work with graphics ... GPU computation ... APIs that allow to work easily on data without having to write shaders directly. We will introduce some of these APIs in Section \ref{}
 
 \begin{itemize}
 	\item Array \= Texture
