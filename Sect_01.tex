@@ -47,6 +47,65 @@ In OpenCL, you can obtain the maximum supported texture size with the \textsl{cl
 
 We will discuss how textures are created and accessed more in deep in Section \ref{}, when we will introduce the OpenCL API.
 
+\subsubsection{Kernels}
+If you are familiar with graphic programming, kernels are the GPGPU equivalent for \textbf{shaders}.
+Kernel programming is the core concept of the GPU computation and forces the developer to think [..] in a different way, as kernels are oriented toward \emph{data-parallelism} implementation, while standard CPU programming is oriented toward a \emph{loop-iteration} implementation, in fact, we can think of kernels as bodies of a loop cycle.
+Since our data is stored into multi-dimensional \textbf{textures}, this texture will be fed to the kernel, that will execute its code over each [..] in parallel, the result of each computation will be found at the same texture coordinate in the output structure. We must keep in mind that GPUs were born to elaborate graphics data, so basically a shader works by applying the same operation over each pixel of an image to obtain a different result.
+Here's an example of a simple shader written in HLSL language, it basically scan the entire texture for completely black pixels and turn them to white:
+
+{\footnotesize\begin{verbatim}
+float4 BlackToWhite(PixelShaderInput input) : COLOR0
+{
+	if(input.Color.r == 0 &&
+	   input.Color.g == 0 &&
+		 input.Color.b == 0)
+		 return float4(1,1,1,1);
+	else
+		return input.Color;
+}
+\end{verbatim}}
+
+The same code in a traditional loop-oriented approach will be something like:
+
+{\footnotesize\begin{verbatim}
+void BlackToWhite(float input[4096][4096][4],float output* [4096][4096][4])
+{
+	for	(int y=0,y<4096,y++)
+		for(int x=0;x<4096;x++)
+		{
+			if(input[x][y][0] == 0 &&
+				 input[x][y][1] == 0 &&
+				 input[x][y][2] == 0)
+				{
+					*output[x][y][0] = 1;
+					*output[x][y][1] = 1;
+					*output[x][y][2] = 1;
+					*output[x][y][3] = 1;
+				}
+				else
+				{
+					*output[x][y][0] = input[x][y][0];
+					*output[x][y][1] = input[x][y][1];
+					*output[x][y][2] = input[x][y][2];
+					*output[x][y][3] = input[x][y][3];
+				}
+		}
+}
+\end{verbatim}}
+
+
+By comparing the two examples, we can note two things:
+
+\begin{enumerate}
+	\item 
+\end{enumerate}
+
+
+...
+OpenCL allows to write Kernels directly without having to write shaders...
+
+
+
 \begin{itemize}
 	\item Array \= Texture
 	\item Kernels
