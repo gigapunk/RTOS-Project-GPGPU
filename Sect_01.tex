@@ -3,7 +3,15 @@
 
 GPGPU (\textit{General Purpose computation on Graphics Processor Unit}), also known as \textit{GPU Computing}, is the utilization of the graphic adapter of a personal computer to perform generic and non-graphic related computation usually handled by the CPU.\\
 Once designed and optimized specifically to perform only graphic calculations, modern GPUs are evolving into \emph{high-performances many-core} processors that can be virtually used to perform any task, and developers who port their applications to GPUs are able to achieve speedups of orders of magnitude vs. optimized CPU implementations.\cite{GPGPUORG:About}\\
-The reason why GPUs are so fast has to be searched [.... ... ] GPUs were born to deal with [extensive performace request by videogame]
+The reason why GPUs are so fast has to be searched in the nature of what graphic rendering is about: a compute-intensive parallel computetion. For this reason, GPUs are engineered to work on data processing, rather than data caching and flow control like the CPUs are.
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/GPU_CPU_struct.eps}
+ \caption{GPU is less about cache and more about computation}
+ \label{fig:cpuvsgpu_scheme}
+\end{figurehere}
+
 Ottimizzate per fare poche e semplici operazioni su vertici e matrici, ma in PARALLELO -> parallelismo intriseco.
 GPUs have been built to exploit application parallelism, and a single graphic adapter can host hundreds, if not thousands, of cores; this translates in TeraFlops of operations per second vs. the few GigaFlops a CPU can handle alone.//
  (incremento più alto di legge di moore?)
@@ -123,7 +131,7 @@ The basic operations for a simple render are:\\
     \end{tabular}}
 \end{table*}
 
-
+After the drawing (the computation) has been performed, the result is stored in the target surface.
 
 %This is a citation \cite{Norman09Learn} and here is another citation
 %\cite{Peyton93Howto}.  Lorem ipsum dolor sit amet, consectetur adipiscing elit.
@@ -143,6 +151,14 @@ The basic operations for a simple render are:\\
 %-----------------------------------------------------------------------------
 \subsection{GPGPU Programming Languages}
 
+In this section we will briefly introduce the most common languages and APIs to develop GPGPU applications.
+
+\subsubsection{CUDA}
+CUDA is the parallel programming platform developed by Nvidia (www.nvidia.com).
+
+\subsubsection{OpenCL}
+
+\subsubsection{DirectCompute}
 
 \begin{figure*}[t]
   \centering
