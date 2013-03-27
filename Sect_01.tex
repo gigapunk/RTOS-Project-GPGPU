@@ -117,7 +117,7 @@ Keeping in mind that GPU's purpose is to draw something on screen, we cannot sim
 The basic operations for a simple render are:\\
 
 
-\begin{table*}
+\begin{table*}[t]
 {\footnotesize
     \begin{tabular}{|p{0,5cm}|p{8cm}|p{8cm}|}
 				\\ \hline
@@ -155,7 +155,7 @@ In this section we will briefly introduce the most common languages and APIs to 
 
 \subsubsection{CUDA (www.nvidia.com)}
 CUDA is the parallel programming platform introduced by Nvidia in 2006 and it has currently reached version 5.
-The main focus of CUDA is on \textbf{automatic scalability}: the program model forces the programmer to partition the main problem into coarse sub-problems that can be solved independently in parallel, and these threads are automatically scaled in runtime over the many cores different GPUs may have (Figure \ref{fig:scalability}).
+The main focus of CUDA is on \textbf{automatic scalability}: the program model forces the programmer to partition the main problem into coarse sub-problems that can be solved independently in parallel, and these threads are automatically scaled in runtime over the many cores different GPUs may have (\textbf{Figure \ref{fig:scalability}}).
 
 \begin{figurehere}
  \centering
@@ -165,11 +165,16 @@ The main focus of CUDA is on \textbf{automatic scalability}: the program model f
 \end{figurehere}
 
 CUDA is mainly based on C-language and follow the programming model introduced in Section \ref{sect:principles}, with \textit{Kernels} and introduces new concepts like \textbf{thread hiearchy} (allowing to create \textit{multi-dimensional thread blocks} that can be executed in parallel) and \textbf{memory hierarchy} (for example each thread has its own local memory and can share memory with thread in their own block).\\
-On the downside, since it is a proprietary framework, CUDA executables will only run on Nvidia graphic cards, and the code cannot fall back on the CPU in the case a CUDA accelerated hardware is not available on the system.\cite{siroro:Comparison}
+On the downside, since it is a proprietary framework, CUDA executables will only run on Nvidia graphic cards, and the code cannot fall back on the CPU in the case a CUDA accelerated hardware is not available on the system.\cite{siroro:GPUComparison}
 
-\subsubsection{OpenCL}
+\subsubsection{OpenCL (www.khronos.org/opencl/)}
+OpenCL (Open Computing Language) is the parallel programming model developed by the Khronos group that focuses on cross-platforming: differently from CUDA, OpenCL is supported on a wide range of devices and can also be used on some embedded or mobile devices like Android phones and iPhones.\\
+The current version of OpenCL is 1.2 and it was released in 2011.
+We will discuss OpenCL more in deep in Section \ref{}.
 
 \subsubsection{DirectCompute}
+Also known as Computer Shader (for more info refer to the msdn library: http://msdn.microsoft.com/) is the GPU computing API developed by Microsoft which is part of the DirectX APIs collection starting from version 11.
+Since it is part of the DirectX package, DirectCompute uses HLSL shading language and integrates well with applications already written with the DirectX API, however, its compatibility is limited to desktop graphic adapters that supports DX10 or 11 and only for Windows (Vista or later) operating systems.
 
 \begin{figure*}[t]
   \centering
