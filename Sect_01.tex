@@ -35,7 +35,7 @@ Furthermore, not all the code can be mapped easily and clearly on the GPU, as pr
 -problemi: difficoltà
 
 %-----------------------------------------------------------------------------
-\subsection{Basic Principles}
+\subsection{Basic Principles} \label{sect:principles}
 % Please avoid separations in titles
 % and separate text manually
 
@@ -153,8 +153,19 @@ After the drawing (the computation) has been performed, the result is stored in 
 
 In this section we will briefly introduce the most common languages and APIs to develop GPGPU applications.
 
-\subsubsection{CUDA}
-CUDA is the parallel programming platform developed by Nvidia (www.nvidia.com).
+\subsubsection{CUDA (www.nvidia.com)}
+CUDA is the parallel programming platform introduced by Nvidia in 2006 and it has currently reached version 5.
+The main focus of CUDA is on \textbf{automatic scalability}: the program model forces the programmer to partition the main problem into coarse sub-problems that can be solved independently in parallel, and these threads are automatically scaled in runtime over the many cores different GPUs may have (Figure \ref{fig:scalability}).
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/scalability.eps}
+ \caption{CUDA executables are automatically scaled over the various SMs (Stream Multiprocessors) a GPU may have : a GPU with more multiprocessors will automatically execute the program in less time than a GPU with fewer multiprocessors.}
+ \label{fig:scalability}
+\end{figurehere}
+
+CUDA is mainly based on C-language and follow the programming model introduced in Section \ref{sect:principles}, with \textit{Kernels} and introduces new concepts like \textbf{thread hiearchy} (allowing to create \textit{multi-dimensional thread blocks} that can be executed in parallel) and \textbf{memory hierarchy} (for example each thread has its own local memory and can share memory with thread in their own block).\\
+On the downside, since it is a proprietary framework, CUDA executables will only run on Nvidia graphic cards, and the code cannot fall back on the CPU in the case a CUDA accelerated hardware is not available on the system.\cite{siroro:Comparison}
 
 \subsubsection{OpenCL}
 
