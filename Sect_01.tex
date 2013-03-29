@@ -119,8 +119,7 @@ The basic operations for a simple render are:\\
 
 \begin{table*}[t]
 {\footnotesize
-    \begin{tabular}{|p{0,5cm}|p{8cm}|p{8cm}|}
-				\\ \hline
+    \begin{tabular}{|p{0,5cm}|p{8cm}|p{8cm}|}\hline
         ~  & \textbf{Drawing perspective} & \textbf{Computation perspective} \\ \hline
         1) & Assign the input texture to a texture channel of the graphic adapter & Define the input data and passing it 	to the kernel          \\ \hline
         2) & Setting the drawing surface & Define where the output data will be stored                 \\ \hline
@@ -129,6 +128,7 @@ The basic operations for a simple render are:\\
         5) & Render the quad & Iterate through data and execute the kernel. \\ \hline
         
     \end{tabular}}
+	\label{tab:computeVsDraw}
 \end{table*}
 
 After the drawing (the computation) has been performed, the result is stored in the target surface.
