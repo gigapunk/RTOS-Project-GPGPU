@@ -25,6 +25,7 @@
 \usepackage[dvips]{graphicx}
 \usepackage{epsfig}
 \usepackage{url}
+\usepackage{framed}
 
 \input{tcilatex}
 %-----------------------------------------------------------------------------
@@ -51,12 +52,15 @@
 \newenvironment{tablehere}{\def\@captype{table}}{}
 \newenvironment{figurehere}{\def\@captype{figure}\vspace{2ex}}{\vspace{2ex}}
 \newcounter{CLCounter}
-\newenvironment{CLCode}{\begin{quote}%
+\newenvironment{CLCode}
+{%
+	\footnotesize\begin{framed}%
     \refstepcounter{CLCounter}%
-  \textbf{OpenCL \arabic{CLCounter}}%
+  \textbf{OpenCL (\arabic{CLCounter})}%
   \quad
-}{%
-\end{quote}%
+}
+{%
+\end{framed}%
 }
 \makeatother
 
