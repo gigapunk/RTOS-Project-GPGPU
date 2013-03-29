@@ -52,7 +52,7 @@ In OpenCL, an instance of a kernel is called \textbf{work-item} and it executes 
  \centering
  \includegraphics[width=8cm, height=4cm]{./eps/index-space.eps}
  \caption{Work-items mapped over a 2-D NDRange. As you can see, work-items can be organized in Work-Groups. Every work-item has both global and local IDs inside its work-group.}
- \label{fig:OpenCLArch}
+ \label{fig:indexSpace}
 \end{figurehere}
 
 \subsubsection{Program Context and Command-Queue}
@@ -74,6 +74,49 @@ After the context has been created, the host initialize a structure called \text
 memory objects from the host address space.
 	\item	\textbf{Synchronization commands}: Used to specify the order of execution of commands.
 \end{enumerate}
+
+\subsubsection{Memory}
+
+There are four types of memory regions in OpenCL: \textbf{Global}, \textbf{Constant}, \textbf{Local} and \textbf{Private}.
+
+\begin{itemize}
+	\item Global memory grants read/write access to \textbf{all} the work-items in every work-group.
+	\item Constant memory is only used to store constants. Only the host has write privileges over it, while kernels can only read from it.
+	\item Local memory is shared among all the work-items that form a group. The host has no access to this memory.
+	\item Private memory is allocated directly by the work-item and can be used only by itself. The host has no access to this part of memory.
+\end{itemize}
+
+Since computation is carried on parallely, one of the major issues about memory is \textbf{consistency}. OpenCL uses a relaxed consistency memory model: the state of memory visible to a work-item is not guaranteed to be consistent across the collection of work-items at all times. \textbf{Table} \ref{tab:memconsistency} summarizes memory consistency for the various regions of memory available.\\
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{2cm}|p{5,5cm}|} \hline
+\textbf{Memory} & \textbf{Consistency}\\ \hline
+Private & memory is not shared, read/write consistency is always guaranteed\\ \hline
+Local & consistency is guaranteed between work-items of the same work-group\\ \hline
+Global & consistency is guaranteed between work-items of the same work-group, but not between multiple work-groups in the case they are assigned to execute the same kernel\\ \hline
+\end{tabular}}
+\caption{Memory consistency}
+\label{tab:memconsistency}
+\end{tablehere}
+
+
+In OpenCL computation is performed over \textbf{memory objects}. There are two distinct memory objects: \textbf{buffers} and \textbf{images}.
+
+\begin{itemize}
+	\item Buffers are used to store a one-dimensional collection of elements (like an array), and those elements can be scalar values (int, float, etc.), vectors or user defined structures.
+	Buffers are stored sequentially and \emph{can be accessed using pointers}; elements of a buffer are stored in memory in the \emph{same format} as they are used by kernels (i.e. if the kernel works on single integers, these elements are stored in memory as integers, this is not true for image objects)
+	\item Images are used to store bi- or three-dimensional structures and their elements cannot be only selected by a list of predefined image formats (i.e. you cannot simply declare int or floats in an image object). Differently from buffers, elements of images \emph{cannot be accessed directly with a pointer} and they are \emph{always stored in memory as 4-dimensinal vectors} (since graphic shaders work on RGB and Alpha components of the pixels of an image)
+\end{itemize}
+
+\begin{CLCode}
+In OpenCL memory objects are stored into \textbf{cl\_mem} structs, that can be easily initializated with the \textbf{clCreateBuffer()} and \textbf{clCreateImage()} functions.\\
+Image format availables may vary from one graphic adapter to another, a list of supported image formats can be obtained using the \textbf{clGetSupportedImageFormats()} query.
+\end{CLCode}
+
+
+
+
 
 
 
