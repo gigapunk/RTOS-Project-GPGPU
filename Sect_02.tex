@@ -128,7 +128,7 @@ Image format availables may vary from one graphic adapter to another, a list of 
 \subsection{Device Fission}
 
 Device Fission is an extension of the OpenCL specification (fully defined in the OpenCL 1.2 specification, although is available as an extension of OpenCL 1.1 as well) that allow more control over parallel application.\\
-As the term 'fission' implies (the action of dividing or splitting something into two or more parts), device fission allows the sub-dividing of a device into one or more sub-devices. This can be used to control manually which CU (Compute Unit) executes specific openCL commands. This practice, when used carefully, can provide a performance advantage, especially when executing the code on the CPU instead of the GPU.\cite{intel:12:DeviceFission}\\
+As the term 'fission' implies (the action of dividing or splitting something into two or more parts), device fission allows the sub-dividing of a device into one or more sub-devices. This can be used to control manually which CU (Compute Unit) executes specific openCL commands. This practice, when used carefully, can provide a performance advantage, especially when executing the code on the CPU instead of the GPU.\cite{intel:12:DeviceFission}\\ It is important to note that at present day, \textbf{device fission is not suported on GPUs}.\cite{gaster:11:DeviceFission}
 Using device fission does require some knowledge of the underlying target hardware. Device fission should be used carefully and may impact code portability and performance if not used properly.
 
 \subsubsection{Device Fission for Embedded Systems}
@@ -136,7 +136,8 @@ Device fissioning can be very useful in an embedded environment (or any other en
 
 \begin{itemize}
 	\item Device fission allows to use only a \emph{portion} of a device, this means that the OpenCL runtime will not take the entire device for itself and other non-OpenCL application can work on it at the same time.
-	\item Devife fission can allow specialized memory sharing models (For example see the partitioning by affinity domain described in \textbf{Section} \ref{DF-subdevices})
+	\item Device fission can allow specialized memory sharing models (For example see the partitioning by affinity domain described in \textbf{Section} \ref{DF-subdevices})
+	\item since embedded systems may have limited graphic capabilities (or no graphic adapter at all), Devide Fission may help to better exploit parallel computation where the only option is to use a CPU and not a GPU
 \end{itemize}
 
 \subsubsection{Sub Devices} \label{sect:DF-subdevices}
@@ -155,7 +156,8 @@ There are three main way to partition a device: \textbf{equally}, \textbf{by cou
 	\item partitioning by \textbf{affinity domain} is an automatic process that will create sub-devices composed of CUs that share similar levels of cache-hierarchy (specified by the programmer, e.g. L1,L2,L3 caches or NUMA nodes). This can be very useful when micro-management of memory is useful or for system where memory is a critical factor (for example in  embedded systems)
 \end{itemize}
 
-You can see examples on how partitioning parameters can be used in \textbf{Appendix A}.
+You can see examples on how partitioning parameters can be used to create different configurations on the same hardware in \textbf{Appendix A}.
+
 
 
 
