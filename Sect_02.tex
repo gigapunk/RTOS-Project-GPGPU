@@ -24,8 +24,9 @@ We can define the structure of an OpenCL application by defining its components.
 \begin{itemize}
 	\item the \textbf{Host} can be viewed as the "`outer control logic"' of the application. It is usually executed on the CPU and its function is to configure the application accordingly to the architecture of the hosting machine, and to submit commands to the computing units.
 	\item one or more \textbf{OpenCL Devices} connected to the host. These devices can be physical (e.g. the graphic adapter installed on the system) or virtual (e.g. remote GPUs in a cluster configuration - for more info about OpenCL clustering refer to the VCL project, http://wwww.mosix.org)
-	\item various \textbf{Compute Units} (CU) that are the equivalent of CUDA's Stream Multiprocessors introduced in \textbf{Figure} \ref{fig:scalability}.
+	\item various \textbf{Compute Units} (CU) that are the equivalent of CUDA's Stream Multiprocessors introduced in \textbf{Figure} \ref{fig:scalability}. A Compute Unit can be viewed as a thread that is executing on a single core of a multicore CPU, or a thread executing on one of the Stream Processors of the GPU.
 	\item each Compute Unit is divided into several \textbf{Processing Elements} (PE). Each PE can work both in \textbf{SIMD} mode (Single Instruction Multiple Data), therefore exploiting \textit{data level parallelism} and \textbf{SPMD} mode (Single Program Multiple Data): the program is divided into independent task that are executed simultaneously.
+	Each PE has it own program counter.
 \end{itemize}
 
 The architecture of an OpenCL application is summarized in \textbf{Figure} \ref{fig:OpenCLArch}:
@@ -36,6 +37,11 @@ The architecture of an OpenCL application is summarized in \textbf{Figure} \ref{
  \caption{OpenCL Architecture}
  \label{fig:OpenCLArch}
 \end{figurehere}
+
+\begin{CLCode}
+A List containing all the available devices on a system can be obtained calling the \textbf{clGetDeviceIDs()} function. 
+\end{CLCode}
+
 
 \subsubsection{Execution and Index Space}
 
@@ -55,7 +61,7 @@ In OpenCL, an instance of a kernel is called \textbf{work-item} and it executes 
  \label{fig:indexSpace}
 \end{figurehere}
 
-\subsubsection{Program Context and Command-Queue}
+\subsubsection{Program Context and Command-Queue} \label{sect:context}
 
 When the host defines the \textbf{context} for the application, it basically define four things:
 
@@ -118,25 +124,37 @@ Image format availables may vary from one graphic adapter to another, a list of 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 %-----------------------------------------------------------------------------
-\subsection{The second subsection of the second \\ Section}
+\subsection{Device Fission}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris eget mauris.
-Nulla facilisi. Ut condimentum tempor eros? Integer metus mauris, consectetur
-sit amet, tempor a, facilisis eu, nisl. Vestibulum at turpis. Ut vitae tortor
-pretium nisl vestibulum blandit. Nulla nibh urna, semper et, elementum at,
-mattis ut, nisi! Cum sociis natoque penatibus et magnis dis parturient montes,
-nascetur ridiculus mus. Morbi vel ligula eget lacus convallis venenatis. Aliquam
-lacinia tincidunt felis. Ut dui.
+Device Fission is an extension of the OpenCL specification (fully defined in the OpenCL 1.2 specification, although is available as an extension of OpenCL 1.1 as well) that allow more control over parallel application.\\
+As the term 'fission' implies (the action of dividing or splitting something into two or more parts), device fission allows the sub-dividing of a device into one or more sub-devices. This can be used to control manually which CU (Compute Unit) executes specific openCL commands. This practice, when used carefully, can provide a performance advantage, especially when executing the code on the CPU instead of the GPU.\cite{intel:12:DeviceFission}\\
+Using device fission does require some knowledge of the underlying target hardware. Device fission should be used carefully and may impact code portability and performance if not used properly.
+
+\subsubsection{Device Fission for Embedded Systems}
+Device fissioning can be very useful in an embedded environment (or any other environment where resources are limited) for several reasons:
+
+\begin{itemize}
+	\item Device fission allows to use only a \emph{portion} of a device, this means that the OpenCL runtime will not take the entire device for itself and other non-OpenCL application can work on it at the same time.
+	\item Devife fission can allow specialized memory sharing models (For example see the partitioning by affinity domain described in \textbf{Section} \ref{DF-subdevices})
+\end{itemize}
+
+\subsubsection{Sub Devices} \label{sect:DF-subdevices}
+Each subdevice can have its own \textbf{context} and \textbf{command-queue} (See \textbf{Section} \ref{sect:context})
+
+\begin{CLCode}
+In OpenCL you can create new sub-devices using the \textbf{clCreateSubDevices()} function. The first parameter to pass is of type \textbf{cl\_device\_id} and it is the ID of the device that has to be partitioned. You can query for a list of available devices on the system by using the \textbf{clGetDeviceIDs()} function. Each sub-device can have a maximum number of compute units specified by the \textbf{CL\_DEVICE\_PARTITION\_MAX\_COMPUTE\_UNITS} property.
+\end{CLCode}
+
+There are three main way to partition a device: \textbf{equally}, \textbf{by counts} and \textbf{by affinity domain}.
+
+\begin{itemize}
+	\item partitioning a device \textbf{equally} means that the application will try to split the device into as many sub-devices as possible, each containting a number of CUs specified by the programmer. If that number does not divide evenly into the maximum available compute units, the remaining are not used.
+	\item \textbf{by counts} means that the device is not divided automatically (and equally), but accordinlgy to a list provided by the programmer (e.g. given the list (4,8,16) the device will be divided into three sub-devices containing respectively 4,8 and 16 CUs)
+	\item partitioning by \textbf{affinity domain} is an automatic process that will create sub-devices composed of CUs that share similar levels of cache-hierarchy (specified by the programmer, e.g. L1,L2,L3 caches or NUMA nodes). This can be very useful when micro-management of memory is useful or for system where memory is a critical factor (for example in  embedded systems)
+\end{itemize}
+
+
+
+
+
