@@ -144,6 +144,7 @@ Each subdevice can have its own \textbf{context} and \textbf{command-queue} (See
 
 \begin{CLCode}
 In OpenCL you can create new sub-devices using the \textbf{clCreateSubDevices()} function. The first parameter to pass is of type \textbf{cl\_device\_id} and it is the ID of the device that has to be partitioned. You can query for a list of available devices on the system by using the \textbf{clGetDeviceIDs()} function. Each sub-device can have a maximum number of compute units specified by the \textbf{CL\_DEVICE\_PARTITION\_MAX\_COMPUTE\_UNITS} property.
+\label{Code:DevicePartitioning}
 \end{CLCode}
 
 There are three main way to partition a device: \textbf{equally}, \textbf{by counts} and \textbf{by affinity domain}.
@@ -153,6 +154,8 @@ There are three main way to partition a device: \textbf{equally}, \textbf{by cou
 	\item \textbf{by counts} means that the device is not divided automatically (and equally), but accordinlgy to a list provided by the programmer (e.g. given the list (4,8,16) the device will be divided into three sub-devices containing respectively 4,8 and 16 CUs)
 	\item partitioning by \textbf{affinity domain} is an automatic process that will create sub-devices composed of CUs that share similar levels of cache-hierarchy (specified by the programmer, e.g. L1,L2,L3 caches or NUMA nodes). This can be very useful when micro-management of memory is useful or for system where memory is a critical factor (for example in  embedded systems)
 \end{itemize}
+
+You can see examples on how partitioning parameters can be used in \textbf{Appendix A}.
 
 
 
