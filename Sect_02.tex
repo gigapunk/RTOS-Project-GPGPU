@@ -125,7 +125,7 @@ Image format availables may vary from one graphic adapter to another, a list of 
 
 
 %-----------------------------------------------------------------------------
-\subsection{Device Fission}
+\subsection{Device Fission Introduction}
 
 Device Fission is an extension of the OpenCL specification (fully defined in the OpenCL 1.2 specification, although is available as an extension of OpenCL 1.1 as well) that allow more control over parallel application.\\
 As the term 'fission' implies (the action of dividing or splitting something into two or more parts), device fission allows the sub-dividing of a device into one or more sub-devices. This can be used to control manually which CU (Compute Unit) executes specific openCL commands. This practice, when used carefully, can provide a performance advantage, especially when executing the code on the CPU instead of the GPU.\cite{intel:12:DeviceFission}\\ It is important to note that at present day, \textbf{device fission is not suported on GPUs}.\cite{gaster:11:DeviceFission}
@@ -145,6 +145,7 @@ Each subdevice can have its own \textbf{context} and \textbf{command-queue} (See
 
 \begin{CLCode}
 In OpenCL you can create new sub-devices using the \textbf{clCreateSubDevices()} function. The first parameter to pass is of type \textbf{cl\_device\_id} and it is the ID of the device that has to be partitioned. You can query for a list of available devices on the system by using the \textbf{clGetDeviceIDs()} function. Each sub-device can have a maximum number of compute units specified by the \textbf{CL\_DEVICE\_PARTITION\_MAX\_COMPUTE\_UNITS} property.
+Since sub-devices are treated in the same exact way as "`normal"' devices, different contexts can be created with the \textbf{clCreateContext()} function by simply passing the IDs of the sub-devices.
 \label{Code:DevicePartitioning}
 \end{CLCode}
 
@@ -156,7 +157,89 @@ There are three main way to partition a device: \textbf{equally}, \textbf{by cou
 	\item partitioning by \textbf{affinity domain} is an automatic process that will create sub-devices composed of CUs that share similar levels of cache-hierarchy (specified by the programmer, e.g. L1,L2,L3 caches or NUMA nodes). This can be very useful when micro-management of memory is useful or for system where memory is a critical factor (for example in  embedded systems)
 \end{itemize}
 
-You can see examples on how partitioning parameters can be used to create different configurations on the same hardware in \textbf{Appendix A}.
+You can see examples on how partitioning parameters can be used to create different configurations on the same hardware in \textbf{Appendix A}.\\
+Another interesting feature of device fission is that you can partition sub-devices to create a tree-like structure like the one shown in \textbf{Figure \ref{fig:subdevicestree}}:
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/partitionTree.eps}
+ \caption{Sub-devices can be further partitioned to create an hierarchy of devices. Each node of the tree can be partitioned using different partition parameters.}
+ \label{fig:subdevicestree}
+\end{figurehere}
+
+\subsection{Device Fission Strategies}
+Device fission can be used in several way to increase performance of OpenCL applications and to manage the (limited) resources of a system in a more efficient way. There are several standard approaches in which device fission can make the difference if used correctly.
+
+\subsubsection{High-Priority dedicated sub-device}
+In this scenario, a sub-device is created to deal with critical tasks, while the rest of the device an be used for standard computation.
+This configuration can be simply achieved by partitioning the device \textit{by counts}, reserving a few cores for high-priority computation and leaving the rest for normal computation.
+
+{\footnotesize\begin{verbatim}
+
+// Get Device ID from platform [0]
+// a list of available platforms can be obtained
+// using clGetPlatformIDs() function
+
+clGetDeviceIDs( platforms[0], CL_DEVICE_TYPE_CPU,
+                1, &device_id, NULL);
+								
+// Create two sub-devices, the parameters for the
+// partitioning are storend into a 
+// cl_device_partition_property array
+
+cl_device_partition_property param[5];
+param[0] = CL_DEVICE_PARTITION_BY_COUNTS;
+param[1] = 2;   // 1st device: 2 compute units
+param[2] = 4; 	// 2nd device: 4 compute units
+param[3] = CL_DEVICE_PARTITION_BY_COUNTS_LIST_END;
+param[4] = 0; //end of list
+
+//now we can create the sub-devices
+cl_device_id output_IDs[2]; 
+clCreateSubDevices(device_id, param, 2,
+                   output_IDs, NULL);
+//our `High Priority' device:
+cl_device_id *hpDevice = &output_IDs[0];  
+//our `normal' device:    
+cl_device_id *normalDevice = &output_IDs[1]; 
+
+\end{verbatim}}
+
+\subsubsection{Memory Proximity}
+If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node.
+Without device fission, there is no guarantee that the work items will have these characteristics.
+This kind of partitioning can be achieved using the \textit{partition by affinity model}, specifying which level of memory needs to be shared.
+
+{\footnotesize\begin{verbatim}
+//In this example we will create 8 sub-devices
+//that share L3 cache
+clGetDeviceIDs( platforms[0], CL_DEVICE_TYPE_CPU,
+                1, &device_id, NULL);
+
+// Fill the parameters list
+cl_device_partition_property params[3];
+params[0] = CL_DEVICE_PARTITION_BT_AFFINITY_DOMAIN;
+params[1] = CL_DEVICE_AFFINITY_DOMAIN_L3_CACHE; 
+params[2] = 0; // End of list
+
+// Create the sub-devices:
+cl_device_id subdevices_IDs[8];
+clCreateSubDevices(device_id, params, 8,
+                   subdevices_IDs, NULL);
+\end{verbatim}}
+
+\subsubsection{Warm Cores Exploitation}
+Without device fission, when a new command is submitted to the command-queue it may happen that it is dispatched for execution over a "`cold"' core. A "`cold"' core is one whose caches are filled with data that is not relevant to the current OpenCL program. With device fission we can force to use already "`warmed up"' cores to minimize latency time.
+This scenario adapts well for short-running programs, where the overhead of "`warming"' the core is relevant. For long-running programs, using device fission in this way may have very little effect or even degrade performance.
+This approach can also be used where thermal management is critical, as it can affect which area of the CPU will heat more.
+
+>>>METTERE ESEMPIO SU COME INDIRIZZARE COMANDI SPECIFICI AL DEVICE
+
+\subsubsection{Maximize Throughput}
+This scenario applies when data sharing is very limited or completely absent, and the only important thing is to maintain high levels of throughput. To achieve this, a job must have \textit{all the resources} available for itself (i.e. all the on-chip caches), and no other jobs may interfere, therefore we must create \emph{one and only one} device for each NUMA node, so no device can "`overlap"' resources with another.
+
+SISTEMARE.......Use Partition By Affinity to create N sub-devices one sub-device for each NUMA node.
+The sub-devices can then use all NUMA node's resources including all of the available cache.
 
 
 
