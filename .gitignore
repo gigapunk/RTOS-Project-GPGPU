@@ -14,3 +14,4 @@
 /Report.run.xml
 Debug/
 bin/
+/src/.gitignore
