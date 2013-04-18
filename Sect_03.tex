@@ -1,24 +1,56 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{The Third Section}
+\section{Parallel Computation and Device Fission on Embedded Systems}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit.  Aenean magna. Nunc non
-ante eget nibh condimentum tempor. Nullam ullamcorper lectus eget mauris. Nam
-neque orci; rhoncus at, pulvinar quis, elementum sit amet, turpis. Mauris
-posuere nisi ut justo. Morbi non lorem vitae mauris interdum faucibus.
-Vestibulum ut sapien in augue faucibus fringilla. Vestibulum ante ipsum primis
-in faucibus orci luctus et ultrices posuere cubilia Curae; Etiam vestibulum
-fringilla libero. Curabitur libero diam, hendrerit sit amet, ornare eget,
-imperdiet vel, purus!
+If we want to discuss about parallel computation on embedded systems, first we have to analyze which hardware is currently available and what their capabilities are.
+In this section we will briefly analyze processors (CPUs and GPUs) that allow some extent of parallelism (4+ cores) and are suitable for an embedded environment.
+
+\subsection{Multicore CPUs for embedded systems}
+
+\subsubsection* {AMD Opteron}
+Opteron CPUs are multi-core high-performance processors targeted for high-end embedded systems and networking and telecommunications infrastructures. Other applications may include storage systems and medical equipment.
+Opteron processors can host up to 16 cores (6000 series) and even the base models come with 8 cores (4000 series), and allow scalability up to 4 sockets for a total of 64 compute units.\cite{amd:opteron6000}\\
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{3cm}|p{3cm}|}\hline
+\textbf{Architecture}& x86 64bit\\ \hline
+\textbf{Applications}& High-end embedded systems\\ \hline
+\textbf{Cores}& 8,16\\ \hline
+\textbf{Frequency range}& 1,8 - 1,3Ghz\\ \hline
+\textbf{Parallelism}& Up to 64 compute units (4 CPUs x 16 cores)\\ \hline
+\end{tabular}}
+\label{tab:OpteronCPU}
+\end{tablehere}
+ 
+\textbf{OpenCL and Device Fission - } Since Opteron CPUs are based on x86 architecture, they natively support OpenCL runtime and drivers, and developing OpenCL application for these CPUs is relatively simple. Applications must be compiled and executed using AMD specific drivers that are part of the AMD APP SDK, obtainable for their website (http://developer.amd.com). A video example demonstrating how an application can scale over 24 opteron (desktop) cores can be found on AMD's youtube channel at http://www.youtube.com/user/AMDUnprocessed/
+
+\subsubsection {ARM Cortex-A and -R Family}
+Cortex-A (Application) and Cortex-R (RealTime) are two processors family developed by ARM and the most widely used processors in embedded and mobile devices. Their range of applications vary from mobile devices (smartphones, tablets, digital camera) to automotive systems and medical equipment. Cortex-A processors host 4 cores while Cortex-R are usually dual core CPU , but more than one ARM CPU can easily be interconnected using AMBA techonlogy to create SoCs (System on Chip) with up to 16 cores.
+
+\textbf{OpenCL and Device Fission - }
+armv7/8 architecture, compatibility
+Device fission -> big.little
+
+\subsubsection {Intel Embedded Platforms}
+(http://edc.intel.com)
+
+\subsection{GPUs for embedded systems}
+arm mali
 
 
 %-----------------------------------------------------------------------------
-\subsection{Tre.punto.uno}
+\subsection{ARM GPUs: Mali Processors Overview}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam consectetur ante at
-eros. Vestibulum mi nisi, venenatis sollicitudin, tempus sed, auctor id, tortor.
-Fusce orci. Duis tellus arcu, euismod sed, consequat sit amet, elementum vel,
-mauris. Curabitur leo diam; dapibus quis, condimentum vitae, dignissim ut, diam.
-Nulla et nulla eget elit volutpat sagittis.
+Cortex processors are divided into three families:
+
+
+\begin{itemize}
+	\item  \textbf{Application Processors [Cortex-A]}: high-performance processors targeted to mobile and embedded devices such as smartphones, tablets and digital TVs. This architecture comes in both single-core (A?) and multi-core mode, so it is possible to perform parallel computation on devices that implements such processors. Cortex-A processors may include a dedicated NEON processing unit for graphics and multimedia.
+	\item  \textbf{Realtime Embedded Processors [Cortex-R]}
+	\item  \textbf{Microcontrollers [Cortex-M]}
+\end{itemize}
+
+
 
 %-----------------------------------------------------------------------------
 \subsection{Tre.punto.due}
