@@ -50,55 +50,93 @@ Devices are stored into a \textbf{cl\_device\_id} structure that is basically an
 
 
 
-\subsubsection{Execution and Index Space}
+\subsubsection{Application Execution, Work Items and Index Space}
 
-From a very coarse point of view, we can describe the execution of an OpenCL application as a two-step process:
+From a very coarse point of view, we can describe the execution of an OpenCL application as a three-step process:
 
 \begin{enumerate}
-	\item the \textbf{host} define the context for \textbf{kernels} and submit them for execution.
-	\item the \textbf{kernel} executes on one or more OpenCL device and compute over a stream of data.
+	\item when the application is launched, the \textbf{host} is executed on the CPU to define the \textbf{program context} (Section \ref{sect:context}) for the kernels and to dispatch them for execution.
+	\item the \textbf{kernels} are executed on the OpenCL device(s) and compute their code over a stream of data.
+	\item the resulting data is returned to the host.
 \end{enumerate}
 
-In OpenCL, an instance of a kernel is called \textbf{work-item} and it executes over an \textbf{index-space} that is defined every time a new kernel is submitted. We can see the index space as the data domain over which the multiple instances of a kernel may work, and it is also called \textbf{NDRange} (N-dimensional index space, where N is one, two or three). From the graphical point of view of the GPU computation, the index range is no more than the texture on which apply the shader (in fact GPUs normally support 1,2 or 3-dimensional textures).\\
+In OpenCL, an \emph{instance} of a kernel is called \textbf{work-item} and it executes over an \textbf{index-space} that contains the data. Multiple instances of a kernel can run simultaneously on the Coumpute Units of a Device (See \textbf{Figure \ref{fig:OpenCLArch}}).\\ Index spaces are basically the memory objects over which the work-items compute their istructions. In OpenCL index-spaces are also called \textbf{NDRange} (N-dimensional index space, where N can be a value of one, two or three, since GPUs can work on 1,2 or 3-dimensional textures).\\
 
 \begin{figurehere}
  \centering
  \includegraphics[width=8cm, height=4cm]{./eps/index-space.eps}
- \caption{Work-items mapped over a 2-D NDRange. As you can see, work-items can be organized in Work-Groups. Every work-item has both global and local IDs inside its work-group.}
+ \caption{Work-items mapped over a two-dimensional NDRange. As you can see, work-items can be organized in Work-Groups and every work-item has both a global and a local ID inside its work-group.}
  \label{fig:indexSpace}
 \end{figurehere}
 
+\begin{CLCode}
+For example, to execute a kernel the host must call the \textbf{clEnqueueNDRangeKernel()} function. As you can see from the function name, kernels are not simply 'executed' but they must be enqueued in a specific command-queue, and they work over a NDRange memory object.
+\end{CLCode}
+
 \subsubsection{Kernel Implementation} \label{sect:kernelImplementation}
-Mettere esempio implementazione kernel in OpenCL
+Below is an example of a simple kernel that calculates the square of the input NDRange:
+
+{\footnotesize\begin{verbatim}
+__kernel void myKernel(__global int* input,
+                       __global int* output)
+{
+    int workID = get_global_id(0);
+    output[workID] = input[workID] * input[workID];
+}\end{verbatim}}
+
+As you can see, a kernel is nothing different from a normal C/C++ function. The interesting thing of a kernel, is that it executes over \emph{each element} of the input memory object, even if no iteration is specified. This is due to the fact that when a kernel is dispatched for execution, it automatically creates multiple ``copies'' of the function (the work-item), each one with its own \textbf{workID} that maps directly to the NDRange. Each work-item has its own local environment that can be accessed using the work-item related function that the OpenCL API offers:\\
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{3,5cm}|p{3,5cm}|}\hline
+\textbf{get\_work\_dim} & Number of dimensions in use\\ \hline
+\textbf{get\_global\_size} & Number of global work items\\ \hline
+\textbf{get\_global\_id} & Global work item ID value\\ \hline
+\textbf{get\_local\_size} & Number of local work items\\ \hline
+\textbf{get\_local\_id} & Local work item ID\\ \hline
+\textbf{get\_num\_groups} & Number of work groups\\ \hline
+\textbf{get\_group\_id} & Work group ID\\ \hline
+\end{tabular}}
+  \caption{Work-Item Built-In Functions\\}
+	\label{tab:workItemFunctions}
+\end{tablehere}
+
 
 \subsubsection{Program Context and Command-Queue} \label{sect:context}
 
-When the host defines the \textbf{context} for the application, it basically define four things:
+As we alreaty mentioned, one of the host functions is to define the \textbf{context} for the application. Contexts are used by the OpenCL runtime for managing objects such as command-queues, memory, program and kernel objects and for executing kernels on one or more devices specified in the context.\\
+It basically consists in:
 
 \begin{enumerate}
-	\item the collection of OpenCL devices to be used
-	\item the collection of functions that will be executed on the devices (that is, the kernels)
+	\item a collection of \textbf{OpenCL devices} to be used
+	\item a collection of the functions that will be executed on the devices (the kernels)
 	\item \textbf{program objects}, that are simply the source files and executables that implements the kernels
-	\item \textbf{memory objects}: the data to be computed
+	\item \textbf{memory objects}: the NDRange objects to be elaborated
 \end{enumerate}
 
-After the context has been created, the host initialize a structure called \textbf{command queue} that is used to schedule commands onto the devices within the context. The command structure is very simple and the main commands issued by the host are only three:
+After the context has been created, the host initialize a structure called \textbf{command queue} that is used to schedule and dispatch commands to the devices within the context. The command structure is very simple and the commands that the host may issue fall only into three categories:
 
 \begin{enumerate}
-	\item \textbf{Kernel execution commands}: Execute a kernel on the PEs (Processing Elements) of a device
+	\item \textbf{Kernel execution commands}: Execute a kernel Processing Elements of a device.
 	\item \textbf{Memory commands}: Transfer data to, from, or between memory objects, or map and unmap
 memory objects from the host address space.
-	\item	\textbf{Synchronization commands}: Used to specify the order of execution of commands.
+	\item	\textbf{Synchronization commands}: Used to specify the order of execution of commands and to synchronize the kernels.
 \end{enumerate}
 
-\subsubsection{Memory}
+\begin{CLCode}
+Context and Command Queues are created by simply calling the \textbf{clCreateContext()} and \textbf{clCreateCommandQueue() 
+} functions in the host.
+\end{CLCode}
 
-There are four types of memory regions in OpenCL: \textbf{Global}, \textbf{Constant}, \textbf{Local} and \textbf{Private}.
+
+\subsubsection{The Memory}
+
+There are four types of memory regions in OpenCL: \textbf{Global Memory}, \textbf{Constant Memory}, \textbf{Local Memory} and \textbf{Private Memory}.
 
 \begin{itemize}
-	\item Global memory grants read/write access to \textbf{all} the work-items in every work-group.
+	\item Global memory grants read/write privileges to \textbf{all} the work-items in every work-group. Basically, every work-item (\emph{that are part of the same context}) can access it.
 	\item Constant memory is only used to store constants. Only the host has write privileges over it, while kernels can only read from it.
-	\item Local memory is shared among all the work-items that form a group. The host has no access to this memory.
+	\item Local memory is shared among all the work-items that form a group. The host has no access to this memory area.
 	\item Private memory is allocated directly by the work-item and can be used only by itself. The host has no access to this part of memory.
 \end{itemize}
 
@@ -112,17 +150,17 @@ Private & memory is not shared, read/write consistency is always guaranteed\\ \h
 Local & consistency is guaranteed between work-items of the same work-group\\ \hline
 Global & consistency is guaranteed between work-items of the same work-group, but not between multiple work-groups in the case they are assigned to execute the same kernel\\ \hline
 \end{tabular}}
-\caption{Memory consistency}
+\caption{Memory consistency\\}
 \label{tab:memconsistency}
 \end{tablehere}
-
-
+%\vfill
+%\columnbreak
 In OpenCL computation is performed over \textbf{memory objects}. There are two distinct memory objects: \textbf{buffers} and \textbf{images}.
 
 \begin{itemize}
 	\item Buffers are used to store a one-dimensional collection of elements (like an array), and those elements can be scalar values (int, float, etc.), vectors or user defined structures.
 	Buffers are stored sequentially and \emph{can be accessed using pointers}; elements of a buffer are stored in memory in the \emph{same format} as they are used by kernels (i.e. if the kernel works on single integers, these elements are stored in memory as integers, this is not true for image objects)
-	\item Images are used to store bi- or three-dimensional structures and their elements cannot be only selected by a list of predefined image formats (i.e. you cannot simply declare int or floats in an image object). Differently from buffers, elements of images \emph{cannot be accessed directly with a pointer} and they are \emph{always stored in memory as 4-dimensinal vectors} (since graphic shaders work on RGB and Alpha components of the pixels of an image)
+	\item Images are used to store bi- or three-dimensional structures and their elements can only be selected from a list of predefined image formats (i.e. you cannot simply declare int or floats in an image object). Differently from buffers, elements of images \emph{cannot be accessed directly with a pointer} and they are \emph{always stored in memory as 4-dimensinal vectors} (since graphic shaders work on RGB and Alpha components of the pixels of an image)
 \end{itemize}
 
 \begin{CLCode}
@@ -132,9 +170,9 @@ Image format availables may vary from one graphic adapter to another, a list of 
 
 
 
-
-
 %-----------------------------------------------------------------------------
+\vfill
+\columnbreak
 \subsection{Device Fission Introduction}
 
 Device Fission is an extension of the OpenCL specification (fully defined in the OpenCL 1.2 specification, although is available as an extension of OpenCL 1.1 as well) that allow more control over parallel application.\\
