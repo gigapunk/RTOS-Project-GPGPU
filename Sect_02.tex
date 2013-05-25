@@ -268,30 +268,57 @@ In this scenario we created two sub-devices, one with 3 Compute Units (the low-p
 In another test we decided to stall the low-priority subdevice with an infinite while loop: the normal tasks were not able to continue their execution, but the the critical ones were executed normally as soon as they were dispatched thanks to the different routing.
 
 \subsubsection{Memory Proximity} \label{sect:memproximity}
-If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node.
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=6cm, height=6cm]{./eps/MemoryProximity.eps}
+ \caption{The main device is partitioned into 2 subdevices that have Compute Units that share the same NUMA node. Subdevice 1 is further partitioned to obtain two devices that shares the same L2 Cache.}
+ \label{fig:MemoryProximity}
+\end{figurehere}
+
+If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node to icrease performance.
 Without device fission, there is no guarantee that the work items will have these characteristics.
 This kind of partitioning can be achieved using the \textit{partition by affinity model}, specifying which level of memory needs to be shared.
+Obviously, this kind of partition is highly hardware-dependant, and it is not guaranteed that a particular partitionig scheme will work on different platforms.
+
+\begin{CLCode}
+The memory domains available on a particular device can be obtained by a simple query with the \textbf{clGetDeviceInfo()} passing \textbf{CL\_DEVICE\_PARTITION\_PROPERTIES} and \textbf{CL\_DEVICE\_PARTITION\_AFFINITY\_DOMAIN} as parameters.
+\label{Code:MemoryDomains}
+\end{CLCode}
+
+The following example creates a partitioning model like the one shown in \textbf{Figure \ref{fig:MemoryProximity}}
 
 {\footnotesize\begin{verbatim}
-//In this example we will create 8 sub-devices
-//that share L3 cache
 clGetDeviceIDs( platforms[0], CL_DEVICE_TYPE_CPU,
                 1, &device_id, NULL);
 
-// Fill the parameters list
+// First partitioning
 cl_device_partition_property params[3];
 params[0] = CL_DEVICE_PARTITION_BT_AFFINITY_DOMAIN;
-params[1] = CL_DEVICE_AFFINITY_DOMAIN_L3_CACHE; 
+params[1] = CL_DEVICE_AFFINITY_DOMAIN_NUMA; 
 params[2] = 0; // End of list
 
 // Create the sub-devices:
-cl_device_id subdevices_IDs[8];
-clCreateSubDevices(device_id, params, 8,
+cl_device_id subdevices_IDs[2];
+clCreateSubDevices(device_id, params, 2,
                    subdevices_IDs, NULL);
+									
+// We devide the first subdevice into 2 further
+// subdevices
+cl_device_partition_property params[3];
+params[0] = CL_DEVICE_PARTITION_BT_AFFINITY_DOMAIN;
+params[1] = CL_DEVICE_AFFINITY_DOMAIN_L2_CACHE; 
+params[2] = 0; // End of list
+
+cl_device_id subsubdevices_IDs[2];
+clCreateSubDevices(subdevices_IDs[0], params, 2,
+                   subsubdevices_IDs, NULL);
+
+
 \end{verbatim}}
 
 \subsubsection{Warm Cores Exploitation}
-Without device fission, when a new command is submitted to the command-queue it may happen that it is dispatched for execution over a "`cold"' core. A "`cold"' core is one whose caches are filled with data that is not relevant to the current OpenCL program. With device fission we can force to use already "`warmed up"' cores to minimize latency time.
+Without device fission, when a new command is submitted to the command-queue it may happen that it is dispatched for execution over a 'cold' core. A 'cold' core is one whose caches are filled with data that is not relevant to the current OpenCL program. With device fission we can force to use already 'warmed up' cores to minimize latency time.
 This scenario adapts well for short-running programs, where the overhead of "`warming"' the core is relevant. For long-running programs, using device fission in this way may have very little effect or even degrade performance.
 This approach can also be used where thermal management is critical, as it can affect which area of the CPU will heat more.
 
