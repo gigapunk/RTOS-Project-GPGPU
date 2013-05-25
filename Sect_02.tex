@@ -206,7 +206,7 @@ There are three main way to partition a device: \textbf{equally}, \textbf{by cou
 \end{itemize}
 
 A list of some examples on how these partitioning parameters can be used to create different configurations on the same hardware can be found in the \textbf{Appendix A}.\\
-Another interesting feature that allow even more flexibility and control over the hardware is that device fission allows sub-devices to be further partitioned and therefore to create a tree-like structure like the one shown in \textbf{Figure \ref{fig:subdevicestree}}:
+Another interesting feature that allow even more flexibility and control over the hardware is that device fission allows sub-devices to be further partitioned and therefore create a tree-like structure like the one shown in \textbf{Figure \ref{fig:subdevicestree}}:
 
 \begin{figurehere}
  \centering
@@ -219,8 +219,17 @@ Another interesting feature that allow even more flexibility and control over th
 Device fission can be used in several way to increase performance of OpenCL applications and to manage the (limited) resources of a system in a more efficient way. There are several standard approaches in which device fission can make the difference if used correctly.
 
 \subsubsection{High-Priority dedicated sub-device}
-In this scenario, a sub-device is created to deal with critical tasks, while the rest of the device an be used for standard computation.
-This configuration can be simply achieved by partitioning the device \textit{by counts}, reserving a few cores for high-priority computation and leaving the rest for normal computation.
+\begin{figurehere}
+ \centering
+ \includegraphics[width=6cm, height=6cm]{./eps/HighPriority.eps}
+ \caption{Scenario 1: a sub device is created to compute high-priority tasks}
+ \label{fig:highPriority}
+\end{figurehere}
+
+In this scenario, a sub-device is created to deal with critical tasks, while the remaining Compute Units of the device will be used for standard computation.
+This configuration can be simply achieved by partitioning the device \textit{by counts}, reserving a few cores for high-priority computation and leaving the rest for normal computation.\\
+The following code demostrates how to partition the device properly, the full code for this scenario can be found in \textbf{Appendix B}.
+
 
 {\footnotesize\begin{verbatim}
 
@@ -246,12 +255,17 @@ param[4] = 0; //end of list
 cl_device_id output_IDs[2]; 
 clCreateSubDevices(device_id, param, 2,
                    output_IDs, NULL);
+									
 //our `High Priority' device:
 cl_device_id *hpDevice = &output_IDs[0];  
 //our `normal' device:    
 cl_device_id *normalDevice = &output_IDs[1]; 
 
 \end{verbatim}}
+
+\subsubsection*{Test Results}
+In this scenario we created two sub-devices, one with 3 Compute Units (the low-priority one) and one with just one CU (the high-priority one) and tried to dispatch different sets of kernels marked 'normal' and 'critical'. First we dispatched all of them only to the low-priority device, and the result was that the tasks were completed in the same exact order they were dispatched, so the critical tasks had to wait for other tasks to finish. Then we routed the high priority tasks to the dedicated subdevice, with the result that those tasks were completed as soon as they were dispatched.\\
+In another test we decided to stall the low-priority subdevice with an infinite while loop: the normal tasks were not able to continue their execution, but the the critical ones were executed normally as soon as they were dispatched thanks to the different routing.
 
 \subsubsection{Memory Proximity} \label{sect:memproximity}
 If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node.
