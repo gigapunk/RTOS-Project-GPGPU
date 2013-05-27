@@ -335,7 +335,15 @@ The implementation of this kind of behaviour is similar to the one described in 
 
 \subsubsection{Flowgraph and Pipeline Computation}
 
-asdasds
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=7cm]{./eps/flow.eps}
+ \caption{Device partitioning allows to create 'virtual' pipelines}
+ \label{fig:flow}
+\end{figurehere}
+
+Since device fission gives total control over task dispatching, we can use it to create complex structures like 
+
 
 \subsubsection{Maximize Throughput}
 This scenario applies when data sharing is very limited or completely absent, and the only important thing is to maintain high levels of throughput. To achieve this, a job must have \textit{all the resources} available for itself (i.e. all the on-chip caches), and no other jobs may interfere, therefore we must create \emph{one and only one} device for each NUMA node, so no device can "`overlap"' resources with another.
