@@ -1,64 +1,59 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Parallel Computation and Device Fission on Embedded Systems}
-
-If we want to discuss about parallel computation on embedded systems, first we have to analyze which hardware is currently available and what their capabilities are.
-In this section we will briefly analyze processors (CPUs and GPUs) that allow some extent of parallelism (4+ cores) and are suitable for an embedded environment.
-
-\subsection{Multicore CPUs for embedded systems}
-
-\subsubsection* {AMD Opteron}
-Opteron CPUs are multi-core high-performance processors targeted for high-end embedded systems and networking and telecommunications infrastructures. Other applications may include storage systems and medical equipment.
-Opteron processors can host up to 16 cores (6000 series) and even the base models come with 8 cores (4000 series), and allow scalability up to 4 sockets for a total of 64 compute units.\cite{amd:opteron6000}\\
-
-\begin{tablehere}
-{\footnotesize
-\begin{tabular}{|p{3cm}|p{3cm}|}\hline
-\textbf{Architecture}& x86 64bit\\ \hline
-\textbf{Applications}& High-end embedded systems\\ \hline
-\textbf{Cores}& 8,16\\ \hline
-\textbf{Frequency range}& 1,8 - 1,3Ghz\\ \hline
-\textbf{Parallelism}& Up to 64 compute units (4 CPUs x 16 cores)\\ \hline
-\end{tabular}}
-\label{tab:OpteronCPU}
-\end{tablehere}
- 
-\textbf{OpenCL and Device Fission - } Since Opteron CPUs are based on x86 architecture, they natively support OpenCL runtime and drivers, and developing OpenCL application for these CPUs is relatively simple. Applications must be compiled and executed using AMD specific drivers that are part of the AMD APP SDK, obtainable for their website (http://developer.amd.com). A video example demonstrating how an application can scale over 24 opteron (desktop) cores can be found on AMD's youtube channel at http://www.youtube.com/user/AMDUnprocessed/
-
-\subsubsection {ARM Cortex-A and -R Family}
-Cortex-A (Application) and Cortex-R (RealTime) are two processors family developed by ARM and the most widely used processors in embedded and mobile devices. Their range of applications vary from mobile devices (smartphones, tablets, digital camera) to automotive systems and medical equipment. Cortex-A processors host 4 cores while Cortex-R are usually dual core CPU , but more than one ARM CPU can easily be interconnected using AMBA techonlogy to create SoCs (System on Chip) with up to 16 cores.
-
-\textbf{OpenCL and Device Fission - }
-armv7/8 architecture, compatibility
-Device fission -> big.little
-
-\subsubsection {Intel Embedded Platforms}
-(http://edc.intel.com)
-
-\subsection{GPUs for embedded systems}
-arm mali
+\section{Examples of OpencCL Applications}
 
 
-%-----------------------------------------------------------------------------
-\subsection{ARM GPUs: Mali Processors Overview}
+%------------------------------------------------------------------------------
+\subsection{OpenCL on FPGA platforms}
 
-Cortex processors are divided into three families:
+\subsubsection{OpenCL-FPGA Implementation}
+As we already saw, OpenCL applications consists of two part: the host and the kernels.
+FPGA flexibility allow the developer to opt for two solutions:
 
+\begin{enumerate}
+	\item An "`All in One"' solution, by implementing the CPU that will run the standard C/C++ host code directly as a soft CPU inside the FPGA.
+	\item A separate solution, by using an external microprocessor for the host and by programming the FPGA to execute the kernels only.
+	\end{enumerate}
+	
+Unlike CPUs and GPUs, where parallel threads can be executed on different cores, FPGAs offer a different strategy. Kernel functions can be transformed into dedicated and deeply pipelined \textbf{hardware circuits} that are inherently multithreaded using the concept of pipeline parallelism. Each of these pipelines can be replicated many times to provide even more parallelism than is possible with a single pipeline. This translates in an immediate boost in performance.\\
+Figure \ref {fig:fpga_example} shows a simple example of how kernels are translated into separate \textbf{hardware pipelines}.
+	
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/FPGA1.eps}
+ \caption{FPGA implementation example}
+ \label{fig:fpga_example}
+\end{figurehere}
+
+The most important concept behind the OpenCL-to-FPGA compiler is the notion of \textbf{pipeline parallelism}.
+Basically, an OpenCL-to-FPGA compiler is able to implement the scenario observed in Section \ref{sect:pipelineScenario} in an automatic and more efficient way. We will describe how pipeline parallelism work by introducing an example, shown in Figure \ref{fig:fpga_example2}:
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/FPGA2.eps}
+ \caption{Pipeline parallelism example}
+ \label{fig:fpga_example2}
+\end{figurehere}
+
+On the first clock cycle, thread 0 is clocked into the two load units. This indicates that they should begin fetching the first elements of data from arrays A and B. On the second clock cycle, thread 1 is clocked in
+at the same time that thread 0 has completed its read from memory and stored the results in the registers following the load units. On cycle 3, thread 2 is clocked in, thread 1 captures its returned data, and thread 0 stores the sum of the two values that it loaded. It is evident that in the steady state, all parts of the pipeline are active, with each stage processing a different thread.
+	
+To complete this section, we'll present a general scheme that summarize how OpenCL-FPGA applications are implemented (Figure \ref{fig:fpga_implementation}). One crucial point for parallel computation is the memory management, and as we can see from the figure several memory interfaces are needed, but luckily OpenCL-FPGA compilers are usually able to implement such interfaces automatically.
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/FPGA3.eps}
+ \caption{OpenCL-FPGA Implementation scheme}
+ \label{fig:fpga_implementation}
+\end{figurehere}
+
+\subsubsection{Benefits}
 
 \begin{itemize}
-	\item  \textbf{Application Processors [Cortex-A]}: high-performance processors targeted to mobile and embedded devices such as smartphones, tablets and digital TVs. This architecture comes in both single-core (A?) and multi-core mode, so it is possible to perform parallel computation on devices that implements such processors. Cortex-A processors may include a dedicated NEON processing unit for graphics and multimedia.
-	\item  \textbf{Realtime Embedded Processors [Cortex-R]}
-	\item  \textbf{Microcontrollers [Cortex-M]}
+	\item \textbf{Improved Time To Market:} OpenCL offers a quicker and simpler way to implement parallel alghorithms  compared to traditional FPGA development using lower level hardware description language (HDLs) such as Verilog or VHDL \cite {altera:FPGA}.  This because OpenCL inherently offers the ability to describe parallel computation, while the main challenge in HDLs languages was exactly to extract thread-level parallelism from a sequential program. OpenCL offers instead the ability to the programmer to explicitly specify and control parallelism.
 \end{itemize}
 
 
-
 %-----------------------------------------------------------------------------
-\subsection{Tre.punto.due}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris eget mauris.
-Nulla facilisi. Ut condimentum tempor eros? Integer metus mauris, consectetur
-sit amet, tempor a, facilisis eu, nisl. Vestibulum at turpis. Ut vitae tortor
-pretium nisl vestibulum blandit. Nulla nibh urna, semper et, elementum at,
-mattis ut, nisi! Cum sociis natoque penatibus et magnis dis parturient montes,
-nascetur ridiculus mus. Morbi vel ligula eget lacus convallis venenatis. Aliquam
-lacinia tincidunt felis. Ut dui.
+
+
