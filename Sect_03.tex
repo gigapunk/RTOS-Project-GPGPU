@@ -99,5 +99,75 @@ These results demonstrate that introducing an FPGA OpenCL implementation of algo
 
 %-----------------------------------------------------------------------------
 
+\subsection{TROVARE TITOLO}
+
+In the next example \cite{Pennycook2012} we'll analyze how OpenCL was used to re-implement an existing benchmarking algorithm to (NO! IN REALTA' E' PIU' LENTO! Scopo: unico source??)damatically increase its performances. This example is interesting because it also analyzes how the introduction of Device Fission allow to obtain even more considerable speedups.
+
+\subsubsection{Background: the LU algorithm}
+
+LU is an application level benchmark part of the NPB Suite (NAS Parallel Benchmark) that consists in a series of parallel aerodynamic simulations designed by NASA. LU is short for Lower-Upper Gauss-Seidel solver and the algorithm is basically a simplified Navier–Stokes equation solver that uses three-dimensional data grid for its calculations. The size of these data cubes is always N^3, and for the purpose of this example we'll focus only on three specific classes of problems: Class A problems (size 64^3), Class B problems (size 102^3) and Class C problems (size 162^3).
+To perform the calculations, each cube of size (n X n X n) is divided into 2D "`slices"' of size (n X n X 1), and each "`slice"' is assigned to a different processor for computation. This algorithm is further optimized used a technique called \textit{k-blocking}; Figure \ref{dataCubes} shows a visual representation of how data is explored, as you can see each block must wait for the adjacent block to be completely computed (black blocks)before they can start.
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/dataCube.eps}
+ \caption{Data cubes used in the LU algorithm}
+ \label{fig:dataCubes}
+\end{figurehere}
+
+
+\subsubsection{The Experiment}
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{1,0cm}|p{1,8cm}|p{1,8cm}|}\hline
+\textbf{Platform} & \textbf{Compute Units} & \textbf{Processing Elements} \\ \hline
+Intel X5550, 2.66 GHz (x86 CPU) & 4 & 4 \\ \hline
+Intel X5660, 2.80 GHz (x86 CPU) & 12 & 12 \\ \hline
+NVIDIA Tesla C1060 (GPU) & 30 & 240 \\ \hline
+NVIDIA Tesla C2050 (GPU) & 14 & 448 \\ \hline
+AMD/ATI FirePro V7800 (GPU) & 18 & 1440 \\ \hline
+\end{tabular}}
+  \caption{Platform used for the experiment}
+	\label{tab:LUBenchmark1}
+\end{tablehere}
+
+Table \ref{tab:LUBenchmark1} shows a list of devices used in the experiment. One important aspect to note of OpenCl is its code portability: a single source can be used on different devices with different numbers of cores processing units, as OpenCL is able to scale automatically. This, for starters, already offers many benefits:
+
+\begin{itemize}
+	\item it is easier to maintain a single code that targets all platforms, as opposed to separate hand-tuned versions of the same code for each alternative platform.
+	\item it reduces the risk of being locked into a single vendor solution.
+	\item benchmarking is simplified, as the results can be compared from a single code source.
+	\item it represents a "`safer"' investment for computing sites, as new codes (and ported legacy codes) will run on both existing and future architectures.
+\end{itemize}
+
+The goal of the experiment was to consider the performances of OpenCL implementation of LU against native FORTRAN77 (for CPUs) and CUDA (for GPUs). Figure \ref{fig:OpenCLvsFORTRAN77} shows the results for the comparison of the OpenCL implementation against the native FORTRAN77 implementation compiled using different compilers.
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/OpenCLvsFORTRAN77.eps}
+ \caption{OpenCL vs Fortran Comparison}
+ \label{fig:OpenCLvsFORTRAN77}
+\end{figurehere}
+
+As we can see the advantage of OpenCL (if any) is very marginal, and in the case of the Sun Studio compiler, the FORTRAN77 implementation performs way better. This result is very interesting because it demonstrates that \emph{OpenCL is not always the best option in term of performance}. The reason of this ``failure'' could be attributed to the fact that the FORTRAN compiler is very mature and has a long story of optimizations and fine-tuning behind it, while OpenCL standard is quite young.
+Let's now see how OpenCL perform against another GPGPU implementation (CUDA), the results are shown in Figure \ref{fig:OpenCLvsCUDA}:
+
+\begin{figurehere}
+ \centering
+ \includegraphics[width=8cm, height=4cm]{./eps/OpenCLvsCUDA.eps}
+ \caption{OpenCL vs CUDA Comparison}
+ \label{fig:OpenCLvsCUDA}
+\end{figurehere}
+
+As we can see even in this case the CUDA implementation performs a little better, and the reason in still to be searched into specific optimizations offered by the CUDA compiler for NVIDIA boards.
+
+\subsubsection{Introducing Device Fission}
+
+
+
+
+
+
 
 
