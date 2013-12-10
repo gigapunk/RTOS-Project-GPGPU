@@ -78,8 +78,7 @@ As we can see, not only the OpenCL framework targeting a FPGA board exceeds the 
 
 In this benchmark the focus is set on a more practical problem than the previous, as it will consider an algorithm used in modern data centers.
 A recent report \cite{walsh:power} from International Data Corporation (IDC) examined the requirements of high performance computing data centers, and conducted a survey of the top constraints in expanding current data center capabilities. From the results, it was obvious that power and cooling costs are the key impediments of compute capability expansion, and as we have seen in the previous benchmark, FPGA computation offer an huge improvement in power consumption over CPUs and GPUs.\\
-
-In this experiment, a document filtering algorithm was implemented using OpenCl, and it basically involves looking at an incoming stream of documents and finding the ones that best match a user’s interest. The results are shown in Table \ref{tab:FPGABenchmark2}:
+In this experiment, a document filtering algorithm was implemented using OpenCL, and it basically involves looking at an incoming stream of documents and finding the ones that best match a user's interest. The results are shown in Table \ref{tab:FPGABenchmark2}:
 
 \begin{tablehere}
 {\footnotesize
@@ -105,7 +104,7 @@ In the next example \cite{Pennycook2012} we'll analyze how OpenCL was used to re
 
 \subsubsection{Background: the LU algorithm}
 
-LU is an application level benchmark part of the NPB Suite (NAS Parallel Benchmark) that consists in a series of parallel aerodynamic simulations designed by NASA. LU is short for Lower-Upper Gauss-Seidel solver and the algorithm is basically a simplified Navier–Stokes equation solver that uses three-dimensional data grid for its calculations. The size of these data cubes is always N^3, and for the purpose of this example we'll focus only on three specific classes of problems: Class A problems (size 64^3), Class B problems (size 102^3) and Class C problems (size 162^3).
+LU is an application level benchmark part of the NPB Suite (NAS Parallel Benchmark) that consists in a series of parallel aerodynamic simulations designed by NASA. LU is short for Lower-Upper Gauss-Seidel solver and the algorithm is basically a simplified Navier-Stokes equation solver that uses three-dimensional data grid for its calculations. The size of these data cubes is always N^3, and for the purpose of this example we'll focus only on three specific classes of problems: Class A problems (size 64^3), Class B problems (size 102^3) and Class C problems (size 162^3).
 To perform the calculations, each cube of size (n X n X n) is divided into 2D "`slices"' of size (n X n X 1), and each "`slice"' is assigned to a different processor for computation. This algorithm is further optimized used a technique called \textit{k-blocking}; Figure \ref{dataCubes} shows a visual representation of how data is explored, as you can see each block must wait for the adjacent block to be completely computed (black blocks)before they can start.
 
 \begin{figurehere}
