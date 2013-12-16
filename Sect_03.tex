@@ -196,6 +196,76 @@ The results of the test are listed in Table \ref{tab:LUDeviceFission}, and they 
 	\label{tab:LUDeviceFission}
 \end{tablehere}
 
+%---------------------------------------------------------------------------------------------------
+
+\subsection{OpenCL remote clustering}
+In this section we'll present an interesting example \cite{mosix:virtualcl} about how OpenCL can be used in a distributed and \emph{heterogeneous} computer environment that can provide an opportunity to dramatically increase the performance of parallel and High-Performance Computing applications on clusters, by \emph{combining} traditional multi-core CPUs, general-purpose GPUs and Accelerator devices. One limitation of parallel computing using OpenCL is that most applications, run their device-specific code (the kernels) only locally on devices of the same computer were the hosts application runs.\\
+Previous studies already demonstrated \cite{barak:heterogeneous} that OpenMP (one of the two main paradigms for HPC application developing) can be extended to use a heterogeneous cluster environment: while the CPU part of the application runs on one node, the GPU kernels run on cluster-wide devices.
+
+\subsubsection{The VirtualCL Cluster Platform}
+VirtualCL (VCL) is a wrapper developed by the authors of this study that allows most unmodified applications
+to transparently utilize many OpenCL devices in a cluster as if all the devices are on the local computer.
+The idea behind the platform is that it provides to the application the impression of a single host with many devices. Users can start a parallel application on a hosting computer, then VCL manages and transparently runs
+the kernels of the application on different nodes.
+VCL is composed of three main components: the VCL library, the broker and the back-end daemon.
+The \textbf{VCL library} is a cluster-wide front-end for OpenCL that gives applications transparent access to cluster-wide openCL devices, hiding the actual location of the devices from the calling executable.
+The \textbf{broker} is a daemon-process connected with the library via a UNIX socket that runs on every host computer. Its main tasks are to monitor for existence and availability of OpenCL devices in the cluster, to allocate them, and to authenticate and route messages between the applications and the back-ends.
+While the brocker daemon runs on each host computer, the \textbf{back-end daemon} runs on each cluster node. Its goal is to run kernels on behalf of the client application.
+
+\subsubsection{VCL Performances}
+One of the main factors that have to be taken in account is the overhead introduced by the VCL model. To measure it it is sufficient to measure the time taken by an application to run a sequence of identical kernels using the native OpenCL library and the times to run the same kernels with VCL on local and remote devices; results are shown in Table \ref{tab:VCLOverhead} and it is clear that the difference between local and remote use of VCL is very small and almost independent from the size of the buffer used.\\
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{1,65cm}|p{1,65cm}|p{1,65cm}|p{1,65cm}|}\hline
+\textbf{Buffer Size} & \textbf{Native OpenCL Time} [ms] & \textbf{VCL Overhead (Local)} [ms] & \textbf{VCL Overhead (Remote)} [ms]\\ \hline
+4 KB & 96 & 35 & 113 \\ \hline
+16 KB & 100 & 35 & 111 \\ \hline
+64 KB & 105 & 35 & 106 \\ \hline
+256 KB & 113 & 36 & 105 \\ \hline
+1 MB & 111 & 34 & 114 \\ \hline
+4 MB & 171 & 36 & 114 \\ \hline
+16 MB & 400 & 36 & 113 \\ \hline
+64 MB & 1354 & 33 & 112 \\ \hline
+256 MB & 4993 & 37 & 111 \\ \hline
+\end{tabular}}
+  \caption{VCL overhead results.}
+	\label{tab:VCLOverhead}
+\end{tablehere}
+
+The next step is to measure how VCL platform actually performs using benchmark applications. To run the test, applications from the SHOC (Scalable HeterOgeneous Computing) benchmark suite were used, and once again the execution time was measured first for native OpenCL implementation, and then for local and remote VCL implementation. The results are presented in Table \ref{tab:VCLBenchmark}.\\
+
+\begin{tablehere}
+{\footnotesize
+\begin{tabular}{|p{1,65cm}|p{1,65cm}|p{1,65cm}|p{1,65cm}|}\hline
+\textbf{Application} & \textbf{Native Time} [sec] & \textbf{VCL Time (Local)} [sec] & \textbf{VCL Time (Remote)} [sec]\\ \hline
+BusSpeedDownload & 0.89 & 0.88 & 0.88 \\ \hline
+BusSpeedReadback & 0.91 & 0.89 & 0.89 \\ \hline
+DeviceMemory & 31.44 & 56.78 & 243.81 \\ \hline
+KernelCompile & 5.91 & 5.93 & 5.94 \\ \hline
+MaxFlops & 186.98 & 156.74 & 211.20 \\ \hline
+QueueDelay & 0.88 & 0.93 & 1.22 \\ \hline
+FFT & 7.29 & 7.15 & 7.33 \\ \hline
+MD & 14.08 & 13.66 & 13.80 \\ \hline
+Reduction & 1.60 & 1.58 & 2.88 \\ \hline
+SGEMM & 2.11 & 2.13 & 2.43 \\ \hline
+Scan & 2.53 & 2.54 & 6.57 \\ \hline
+Sort & 0.98 & 1.04 & 1.53 \\ \hline
+Spmv & 3.25 & 3.30 & 5.91 \\ \hline
+Stencil2D & 11.65 & 12.48 & 18.94 \\ \hline
+Triad & 6.01 & 11.83 & 53.37 \\ \hline
+S3D & 32.39 & 32.68 & 33.17 \\ \hline
+\end{tabular}}
+  \caption{VCL benchmark results.}
+	\label{tab:VCLBenchmark}
+\end{tablehere}
+
+
+By looking at the results it may seem that using VCL does not provide much advantage over native and local OpenCL implementation, but it is not to be forgotten that the goal was not to achieve better performances and faster execution, but rather to have remote and heterogeneous computation. Using cluster systems, much more computation power is available at the cost of network bandwidth and delay, so VCL has proven to perform better on applications with relatively long kernels and infrequent buffer-I/O operations, while those with many short kernels or with frequent or large I/O operations can't perform too well.
+The opinion of the authors of this study is that running parallel kernels efficiently on remote devices in a cluster is quite feasible
+and that VCL should be able to support largescale high-end parallel computing applications.
+An ideal cluster for running parallel HPC applications with the VirtualCL platform would be a collection of low-cost servers, each with several OpenCL devices, connected by a low-latency, high-bandwidth network to high-end hosting nodes with many cores and large memories.
+
 
 
 
