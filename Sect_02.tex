@@ -2,44 +2,14 @@
 \section{OpenCL and Device Fission} \label{sect:openCL}
 
 OpenCL consists of an API for coordinating \textit{parallel computation across heterogeneous processors} (CPU, GPU and potentialy any other processor) and it is supported by a wide range of systems and platforms, making it the perfect choice for parallel computation not only on traditional desktop CPU-GPU configuration, but also on embedded systems.
-OpenCL was initially developed by Apple, but is now maintained by the Khronos Group (http://www.khronos.org) that, in 2011, released the 1.2 version of the API, introducing new features such as enanched image support, built-in kernels and \textbf{device partitioning}.\\
+OpenCL was initially developed by Apple, but is now maintained by the Khronos Group (http://www.khronos.org) that, in 2011, released the 1.2 version of the API, introducing new features such as enanched image support, built-in kernels and \textbf{device partitioning} (also known as Device Fission).\\
 Since the strength of OpenCL is its heterogeneity, to compile and to execute and OpenCL application, one must install on the system the libraries specific to the target platform, and usually each hardware manufacturer provide its own SDK to develop and run OpenCL applications.
 
 %-----------------------------------------------------------------------------
 \subsection{OpenCL Architecture} \label{sect:openCLArch}
 
-%OpenCL is a framework which is composed of 4 main components:
-%
-%\begin{enumerate}
-%	\item a \textbf{language} [APPROFONDIRE]
-%	\item an \textbf{API} [APPROF]
-%	\item a series of \textbf{libraries} [APPROF]
-%	\item a \textbf{runtime system} [APPROF]
-%\end{enumerate}
-%
-%To better describe the architecture of OpenCL, we can divide it into four models:
-%
-%\subsubsection{The Platform Model}
-To define the structure of an OpenCL application, first we will introduce its core components. Some of these components (host and kernels) are ``software components'' that, together, form the core of an OpenCL executable, while other components (like Compute Units) refer to the underlying hardware that has to run our application.\\
-The architecture of an OpenCL application is summarized in \textbf{Figure} \ref{fig:OpenCLArch}
-
-\subsubsection*{The Host}
-The Host can be viewed as the \textbf{controller} of the application. It usually doesn't perform tasks specific to the domain of the application and its main function is to setup and configure the environment, to issue commands to the compute units and to coordinate the kernels. Since the host is basically a ``standard'' executable that executes ``normal'' code, it is always executed on the CPU and never on the GPU.
-
-\begin{CLCode}
-The host is a standard C/C++ application implemented inside a 'main' function. Every host always need these five data structures to properly setup an OpenCL environment: \textbf{cl\_device\_id}, \textbf{cl\_kernel}, \textbf{cl\_program}, \textbf{cl\_command\_queue}, and \textbf{cl\_context}.
-\end{CLCode}
-
-\subsubsection*{The Kernels}
-
-\subsubsection*{The Device(s)}
-One or more OpenCL Devices can be connected to the host. These devices can be physical (e.g. the graphic adapter installed on the system or the CPU if no GPU is available) or even virtual (e.g. remote GPUs in a cluster configuration or sub-devices using device partitioning)
-Each device hosts several \textbf{Compute Units} that are basically the cores of a CPU or the Stream Multiprocessor of a GPU and each Compute Unit is further divided into different \textbf{Processing Elements} that can work in both \textbf{SIMD} mode (Single Instruction Multiple Data), and \textbf{SPMD} mode (Single Program Multiple Data).
-Each Processing Element has it own program counter and run independetly from the others.
-
-\begin{CLCode}
-Devices are stored into a \textbf{cl\_device\_id} structure that is basically an array that can be filled with  all the available devices on a system by calling the \textbf{clGetDeviceIDs()} function, specifying the type of device required (CL\_DEVICE\_TYPE\_CPU or CL\_DEVICE\_TYPE\_GPU). Once we have filled the cl\_device\_id structure, it can be passed to the \textbf{clGetDeviceInfo()} function  with \textbf{CL\_DEVICE\_MAX\_COMPUTE\_UNITS} as parameter to query the maximum number of Compute Units available.
-\end{CLCode}
+To define the structure of an OpenCL application, first we will introduce its core components. Some of these components (Host and Kernels) are ``software components'' that, together, form the core of an OpenCL executable, while other components (Compute Devices and Units) refer to the underlying hardware that has to run our application.\\
+The architecture of an OpenCL application is summarized in \textbf{Figure \ref{fig:OpenCLArch}}, and the main components that needs further investigation are the \textbf{Host} (executed on the CPU), the \textbf{Kernels} (executed on the processig elements of the OpenCL device) and the \textbf{device}. We'll now introduce the concepts behind the host and the device; kernels and their implementation will be discussed later in Section \ref{sect:kernelImplementation} \\
 
 \begin{figurehere}
  \centering
@@ -48,6 +18,41 @@ Devices are stored into a \textbf{cl\_device\_id} structure that is basically an
  \label{fig:OpenCLArch}
 \end{figurehere}
 
+\subsubsection{The Host}
+The Host can be viewed as the \textbf{controller} of the application. It usually doesn't perform any task specific to the domain of the application and its main function is only to setup and configure the environment, to issue commands to the compute units and to coordinate the kernels. Since the host is basically a ``standard'' executable that executes ``normal'' code, it is always executed on the CPU and never on the GPU.\\
+Here's list of the main tasks that every host should do:
+
+\begin{enumerate}
+	\item Declare the necessary structures (Kernels, devices, memory objects...)
+	\item Query the hardware capability (Number of devices available, number of processing units, buffers size...)
+	\item Obtain hardware resources
+	\item Initialize memory objects
+	\item Create kernels
+	\item Issue orders to kernels (Launch, synchronization, memory management)
+	\item Retrieve output data from kernels
+	\item Manage errors
+	\item Release of hardware resources, deallocation of memory, and final cleanup.
+\end{enumerate}
+
+\begin{CLCode}
+In OpenCL the host is a standard C/C++ application implemented inside the classical 'main' function. Every host must always implement and initialize these five data structures in order to properly setup an OpenCL environment:\\
+\textbf{cl\_device\_id} to obtain an handle to the hardware device,\\
+\textbf{cl\_kernel} to have a reference to each kernel implemented,\\
+\textbf{cl\_program} to define the main program that contains all the kernels,\\
+a \textbf{cl\_command\_queue} for each kernel, used to issue commands to them ,\\
+a \textbf{cl\_context} that wraps all programs, kernels, devices and memory object of an OpenCL application.\\
+In Appendix \ref{appendix:B} you can see an example of OpenCL host implementation.
+\end{CLCode}
+
+
+\subsubsection{The Device(s)}
+One or more OpenCL Devices can be connected to the host. These devices can be physical (e.g. the graphic adapter installed on the system or the CPU if no GPU is available) or even virtual (e.g. remote GPUs in a cluster configuration or sub-devices using device partitioning)
+Each device hosts several \textbf{Compute Units} that are basically the cores of a CPU or the Stream Multiprocessor of a GPU and each Compute Unit is further divided into different \textbf{Processing Elements} that can work in both \textbf{SIMD} mode (Single Instruction Multiple Data), and \textbf{SPMD} mode (Single Program Multiple Data).
+Each Processing Element has it own program counter and run independetly from the others.
+
+\begin{CLCode}
+Devices are stored into a \textbf{cl\_device\_id} structure that is basically an array that can be filled with  all the available devices on a system by calling the \textbf{clGetDeviceIDs()} function, specifying the type of device required (CL\_DEVICE\_TYPE\_CPU or CL\_DEVICE\_TYPE\_GPU). Once we have filled the cl\_device\_id structure, it can be passed to the \textbf{clGetDeviceInfo()} function  with \textbf{CL\_DEVICE\_MAX\_COMPUTE\_UNITS} as parameter to query the maximum number of Compute Units available.
+\end{CLCode}
 
 
 \subsubsection{Application Execution, Work Items and Index Space}
