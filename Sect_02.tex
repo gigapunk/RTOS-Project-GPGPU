@@ -1,3 +1,5 @@
+\hyphenation{clCreateSubDevices}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{OpenCL and Device Fission} \label{sect:openCL}
 
@@ -19,19 +21,19 @@ The architecture of an OpenCL application is summarized in \textbf{Figure \ref{f
 \end{figurehere}
 
 \subsubsection{The Host}
-The Host can be viewed as the \textbf{controller} of the application. It usually doesn't perform any task specific to the domain of the application and its main function is only to setup and configure the environment, to issue commands to the compute units and to coordinate the kernels. Since the host is basically a ``standard'' executable that executes ``normal'' code, it is always executed on the CPU and never on the GPU.\\
+The Host can be viewed as the \textbf{controller} of the application. It usually doesn't perform any task specific to the domain of the application and its main function is only to setup and configure the environment, to issue commands to the compute units and to coordinate the kernels. Since the host is basically a ``standard'' executable that executes ``normal'' code, \emph{it is always executed on the CPU and never on the GPU}.\\
 Here's list of the main tasks that every host should do:
 
 \begin{enumerate}
 	\item Declare the necessary structures (Kernels, devices, memory objects...)
-	\item Query the hardware capability (Number of devices available, number of processing units, buffers size...)
-	\item Obtain hardware resources
-	\item Initialize memory objects
+	\item Query for hardware capability (Number of devices available, number of processing units, buffers size...)
+	\item Obtain and lock hardware resources
+	\item Create and initialize memory objects (see Section \ref{sect:memory})
 	\item Create kernels
 	\item Issue orders to kernels (Launch, synchronization, memory management)
 	\item Retrieve output data from kernels
 	\item Manage errors
-	\item Release of hardware resources, deallocation of memory, and final cleanup.
+	\item Release of hardware resources, deallocate memory, and final cleanup.
 \end{enumerate}
 
 \begin{CLCode}
@@ -47,7 +49,7 @@ In Appendix \ref{appendix:B} you can see an example of OpenCL host implementatio
 
 \subsubsection{The Device(s)}
 One or more OpenCL Devices can be connected to the host. These devices can be physical (e.g. the graphic adapter installed on the system or the CPU if no GPU is available) or even virtual (e.g. remote GPUs in a cluster configuration or sub-devices using device partitioning)
-Each device hosts several \textbf{Compute Units} that are basically the cores of a CPU or the Stream Multiprocessor of a GPU and each Compute Unit is further divided into different \textbf{Processing Elements} that can work in both \textbf{SIMD} mode (Single Instruction Multiple Data), and \textbf{SPMD} mode (Single Program Multiple Data).
+Each device hosts several \textbf{Compute Units} that are basically the cores of a CPU or the Stream Multiprocessors of a GPU and each Compute Unit is further divided into different \textbf{Processing Elements} that can work in both \textbf{SIMD} mode (Single Instruction Multiple Data), and \textbf{SPMD} mode (Single Program Multiple Data).
 Each Processing Element has it own program counter and run independetly from the others.
 
 \begin{CLCode}
@@ -61,11 +63,12 @@ From a very coarse point of view, we can describe the execution of an OpenCL app
 
 \begin{enumerate}
 	\item when the application is launched, the \textbf{host} is executed on the CPU to define the \textbf{program context} (Section \ref{sect:context}) for the kernels and to dispatch them for execution.
-	\item the \textbf{kernels} are executed on the OpenCL device(s) and compute their code over a stream of data.
-	\item the resulting data is returned to the host.
+	\item the \textbf{kernels} are launched by the host and executed on the OpenCL device(s). They compute their code in parallel over the input stream of data.
+	\item the output data is returned to the host.
 \end{enumerate}
 
 In OpenCL, an \emph{instance} of a kernel is called \textbf{work-item} and it executes over an \textbf{index-space} that contains the data. Multiple instances of a kernel can run simultaneously on the Coumpute Units of a Device (See \textbf{Figure \ref{fig:OpenCLArch}}).\\ Index spaces are basically the memory objects over which the work-items compute their istructions. In OpenCL index-spaces are also called \textbf{NDRange} (N-dimensional index space, where N can be a value of one, two or three, since GPUs can work on 1,2 or 3-dimensional textures).\\
+In \textbf{Figure \ref{fig:indexSpace}} you can see how work-items and work-groups are organized, and in the next section there's a little example of how a kernel can obtain its own global ID over the NDRange.
 
 \begin{figurehere}
  \centering
@@ -75,7 +78,7 @@ In OpenCL, an \emph{instance} of a kernel is called \textbf{work-item} and it ex
 \end{figurehere}
 
 \begin{CLCode}
-For example, to execute a kernel the host must call the \textbf{clEnqueueNDRangeKernel()} function. As you can see from the function name, kernels are not simply 'executed' but they must be enqueued in a specific command-queue, and they work over a NDRange memory object.
+For example, to execute a kernel the host must call the \textbf{clEnqueueNDRangeKernel()} function. As you can see from the function name, kernels are not simply 'executed' but they must be added to a specific command-queue that will later be launched.
 \end{CLCode}
 
 \subsubsection{Kernel Implementation} \label{sect:kernelImplementation}
@@ -89,7 +92,7 @@ __kernel void myKernel(__global int* input,
     output[workID] = input[workID] * input[workID];
 }\end{verbatim}}
 
-As you can see, a kernel is nothing different from a normal C/C++ function. The interesting thing of a kernel, is that it executes over \emph{each element} of the input memory object, even if no iteration is specified. This is due to the fact that when a kernel is dispatched for execution, it automatically creates multiple ``copies'' of the function (the work-item), each one with its own \textbf{workID} that maps directly to the NDRange. Each work-item has its own local environment that can be accessed using the work-item related function that the OpenCL API offers:\\
+As you can see, a kernel is nothing different from a normal C/C++ function. The interesting thing of a kernel, is that it executes over \emph{each element} of the input memory object, even if no iteration is specified. This is due to the fact that when a kernel is dispatched for execution, it automatically creates multiple ``copies'' of the function (the work-item), each one with its own \textbf{workID} that maps directly to the NDRange and that will execute on a different Processing Element. Each work-item has both a \textbf{global environment} shared with all other work-items and its own \textbf{local environment} that can be accessed using the specific function that the OpenCL API offers:\\
 
 \begin{tablehere}
 {\footnotesize
@@ -106,11 +109,10 @@ As you can see, a kernel is nothing different from a normal C/C++ function. The 
 	\label{tab:workItemFunctions}
 \end{tablehere}
 
-
 \subsubsection{Program Context and Command-Queue} \label{sect:context}
 
 As we alreaty mentioned, one of the host functions is to define the \textbf{context} for the application. Contexts are used by the OpenCL runtime for managing objects such as command-queues, memory, program and kernel objects and for executing kernels on one or more devices specified in the context.\\
-It basically consists in:
+A context basically consists in:
 
 \begin{enumerate}
 	\item a collection of \textbf{OpenCL devices} to be used
@@ -122,7 +124,7 @@ It basically consists in:
 After the context has been created, the host initialize a structure called \textbf{command queue} that is used to schedule and dispatch commands to the devices within the context. The command structure is very simple and the commands that the host may issue fall only into three categories:
 
 \begin{enumerate}
-	\item \textbf{Kernel execution commands}: Execute a kernel Processing Elements of a device.
+	\item \textbf{Kernel execution commands}: Execute a kernel on a Processing Elements of a specific device.
 	\item \textbf{Memory commands}: Transfer data to, from, or between memory objects, or map and unmap
 memory objects from the host address space.
 	\item	\textbf{Synchronization commands}: Used to specify the order of execution of commands and to synchronize the kernels.
@@ -134,7 +136,7 @@ Context and Command Queues are created by simply calling the \textbf{clCreateCon
 \end{CLCode}
 
 
-\subsubsection{The Memory}
+\subsubsection{The Memory} \label{sect:memory}
 
 There are four types of memory regions in OpenCL: \textbf{Global Memory}, \textbf{Constant Memory}, \textbf{Local Memory} and \textbf{Private Memory}.
 
@@ -145,7 +147,7 @@ There are four types of memory regions in OpenCL: \textbf{Global Memory}, \textb
 	\item Private memory is allocated directly by the work-item and can be used only by itself. The host has no access to this part of memory.
 \end{itemize}
 
-Since computation is carried on parallely, one of the major issues about memory is \textbf{consistency}. OpenCL uses a relaxed consistency memory model: the state of memory visible to a work-item is not guaranteed to be consistent across the collection of work-items at all times. \textbf{Table} \ref{tab:memconsistency} summarizes memory consistency for the various regions of memory available.\\
+Since computation is carried on parallely, one of the major issues about memory is \textbf{consistency}. OpenCL uses a relaxed consistency memory model: the state of memory visible to a work-item is not guaranteed to be consistent across the collection of work-items at all times. \textbf{Table \ref{tab:memconsistency}} summarizes memory consistency for the various regions of memory available.\\
 
 \begin{tablehere}
 {\footnotesize
@@ -180,7 +182,7 @@ Image format availables may vary from one graphic adapter to another, a list of 
 \columnbreak
 \subsection{Device Fission Introduction}
 
-Device Fission is an extension of the OpenCL specification (fully defined in OpenCL 1.2, although is already available in OpenCL 1.1 as well as an optional extension) that adds a whole new level of control over parallel computation and hardware management.\\
+Device Fission is an extension of the OpenCL specification (fully defined in OpenCL 1.2, although it was already available in OpenCL 1.1 as well as an optional extension) that adds a whole new level of control over parallel computation and hardware management.\\
 As the term 'fission' implies (dividing or splitting something into two or more parts), device fission allows the sub-dividing of a device into one or more virtual sub-devices. This practice, when used carefully, can provide a huge performance boost, especially when executing parallel code on the CPU instead of the GPU \cite{intel:12:DeviceFission} (At present day device fission is suported only on CPUs and not on GPUs \cite{gaster:11:DeviceFission})
 Implementing applications that use device fission \emph{does} require some knowledge of the underlying target hardware and, if not used properly, it can lead to worst performances and it may impact code portability.
 
@@ -197,7 +199,7 @@ Device fissioning can be very useful in embedded environments and, in general, i
 Each subdevice can have its own \textbf{program context} and \textbf{command-queue} (See Section \ref{sect:context}), this means that each subdevice can have its own private area of memory and that kernels can be dispatched independently to one subdevice or another.\\
 
 \begin{CLCode}
-In OpenCL you can create new sub-devices using the \textbf{clCreateSubDevices()} function. The first parameter to pass is of type \textbf{cl\_device\_id} and it is the ID of the 'parent' device to be partitioned. You can query for a list of available devices on the system by using the \textbf{clGetDeviceIDs()} function. Each sub-device can have a maximum number of compute units specified by the \textbf{CL\_DEVICE\_PARTITION\_MAX\_COMPUTE\_UNITS} property.
+In OpenCL you can create new sub-devices using the \textbf{clCreateSubDevices()} function. The first parameter to pass is of type \textbf{cl\_device\_id} and it is the ID of the 'parent' device to be partitioned.\\ You can query for a list of available devices on the system by using the \textbf{clGetDeviceIDs()} function. Each sub-device can have a maximum number of compute units specified by the \textbf{CL\_DEVICE\_PARTITION\_MAX\_COMPUTE\_UNITS} property.
 Since sub-devices are treated in the same exact way as 'normal' devices, different contexts and command-queue can be created by simply passing the ID of the subdevice to the \textbf{clCreateContext()} and \textbf{clCreateCommandQueue()} functions .
 \label{Code:DevicePartitioning}
 \end{CLCode}
@@ -221,7 +223,7 @@ Another interesting feature that allow even more flexibility and control over th
 \end{figurehere}
 
 \subsection{Device Fission Strategies}
-Device fission can be used in several way to increase performance of OpenCL applications and to manage the (limited) resources of a system in a more efficient way. There are several standard approaches in which device fission can make the difference if used correctly.
+Device fission can be used in several way to increase performance of OpenCL applications and to manage the (limited) resources of a system in a more efficient way. There are several standard approaches in which device fission can make the difference if used correctly and in the next sections we'll present some examples.
 
 \subsubsection{High-Priority dedicated sub-device} \label{sect:highPriority}
 \begin{figurehere}
@@ -231,9 +233,9 @@ Device fission can be used in several way to increase performance of OpenCL appl
  \label{fig:highPriority}
 \end{figurehere}
 
-In this scenario, a sub-device is created to deal with critical tasks, while the remaining Compute Units of the device will be used for standard computation.
-This configuration can be simply achieved by partitioning the device \textit{by counts}, reserving a few cores for high-priority computation and leaving the rest for normal computation.\\
-The following code demostrates how to partition the device properly, the full code for this scenario can be found in \textbf{Appendix B}.
+In this scenario, a sub-device is created to deal with critical tasks, while the remaining Compute Units of the device will be used for standard computation. Low priority tasks will be dispatched to the low priority queue, in this way the high priority device will will always have its command queue free and will be able to execute its tasks as soon as they are issued.
+This configuration can be simply achieved by partitioning the device \textit{by counts}, reserving a few cores (1 or 2) for high-priority computation and leaving the rest for normal computation.\\
+The following code demostrates how to partition the device properly, the full code for this scenario can be found in \textbf{Appendix \ref{Appendix:B}}.
 
 
 {\footnotesize\begin{verbatim}
@@ -269,8 +271,9 @@ cl_device_id *normalDevice = &output_IDs[1];
 \end{verbatim}}
 
 \subsubsection*{Test Results}
-In this scenario we created two sub-devices, one with 3 Compute Units (the low-priority one) and one with just one CU (the high-priority one) and tried to dispatch different sets of kernels marked 'normal' and 'critical'. First we dispatched all of them only to the low-priority device, and the result was that the tasks were completed in the same exact order they were dispatched, so the critical tasks had to wait for other tasks to finish. Then we routed the high priority tasks to the dedicated subdevice, with the result that those tasks were completed as soon as they were dispatched.\\
-In another test we decided to stall the low-priority subdevice with an infinite while loop: the normal tasks were not able to continue their execution, but the the critical ones were executed normally as soon as they were dispatched thanks to the different routing.
+We partitioned a CPU device with 4 cores in total and created two sub-devices, one with 3 Compute Units (the low-priority one) and one with just one Compute Unit (the high-priority one). Then we tried to dispatch different sets of kernels marked 'normal' and 'critical'. First we dispatched all of them only to the low-priority device, and the result was that the tasks were completed in the same exact order they were dispatched, so the critical tasks had to wait for other tasks to finish. Then we routed the high priority tasks to the dedicated subdevice, with the result that those tasks were completed as soon as they were dispatched.\\
+In another test we decided to block the low-priority subdevice by letting it execute an infinite while loop, the result was that the normal tasks were not able to continue their execution, but the the critical ones were still executed normally as soon as they were dispatched since they were routed to a different device.
+
 
 \subsubsection{Memory Proximity} \label{sect:memproximity}
 
@@ -281,10 +284,10 @@ In another test we decided to stall the low-priority subdevice with an infinite 
  \label{fig:MemoryProximity}
 \end{figurehere}
 
-If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node to icrease performance.
+If the work-items of the application share high amounts of data, it can be useful to create sub-devices that share the same cache or are physically placed on the same NUMA node to increase performance.
 Without device fission, there is no guarantee that the work items will have these characteristics.
-This kind of partitioning can be achieved using the \textit{partition by affinity model}, specifying which level of memory needs to be shared.
-Obviously, this kind of partition is highly hardware-dependant, and it is not guaranteed that a particular partitionig scheme will work on different platforms.
+This kind of partitioning can be achieved using the \textit{partition by affinity model}, specifying which level of memory needs to be shared.\\
+Obviously, this kind of partition is highly hardware-dependent, and it is not guaranteed that a particular partitioning scheme will work on different platforms. To maintain portability the host should check which partition models are available on that specific device and decide at runtime how to subdivide it. 
 
 \begin{CLCode}
 The memory domains available on a particular device can be obtained by a simple query with the \textbf{clGetDeviceInfo()} passing \textbf{CL\_DEVICE\_PARTITION\_PROPERTIES} and \textbf{CL\_DEVICE\_PARTITION\_AFFINITY\_DOMAIN} as parameters.
@@ -311,7 +314,7 @@ clCreateSubDevices(device_id, params, 2,
 // We devide the first subdevice into 2 further
 // subdevices
 cl_device_partition_property params[3];
-params[0] = CL_DEVICE_PARTITION_BT_AFFINITY_DOMAIN;
+params[0] = CL_DEVICE_PARTITION_BY_AFFINITY_DOMAIN;
 params[1] = CL_DEVICE_AFFINITY_DOMAIN_L2_CACHE; 
 params[2] = 0; // End of list
 
@@ -321,10 +324,11 @@ clCreateSubDevices(subdevices_IDs[0], params, 2,
 
 
 \end{verbatim}}
+
+The case study in Section \ref{sect:LUDeviceFission} contains an example on how partition by affinity is used to exploit temporal and spatial cache locality.
+
 \vfill
 \columnbreak
-
-AGGIUNGERE RIFERIMENTO A CASE STUDY IN SEZIONE 3 (3.2)
 
 \subsubsection{Warm Cores Exploitation}
 
@@ -335,10 +339,10 @@ AGGIUNGERE RIFERIMENTO A CASE STUDY IN SEZIONE 3 (3.2)
  \label{fig:WarmCores}
 \end{figurehere}
 
-Without device fission, when a new command is submitted to the command-queue it may happen that it will br dispatched for execution to a 'cold' core. 'Cold' cores are those that have cache memory filled with data that is not relevant to the current OpenCL program or task. With device fission we can force to use already 'warmed up' cores to minimize latency time.
+Without device fission, when a new command is submitted to the command-queue it may happen that it will be dispatched for execution to a 'cold' core. 'Cold' cores are those that have cache memory filled with data that is not relevant to the current OpenCL program or task. With device fission we can force to use already 'warmed up' cores to minimize latency time.
 This scenario adapts well for short-running programs, where the overhead of `warming' the core is relevant. For long-running programs, using device fission in this way may have very little effect or even degrade performance.
 This approach can also be used for thermal management purposes, as it can have effect on which area of the CPU will heat more.\\
-The implementation of this kind of behaviour is similar to the one described in Section \ref{sect:highPriority}: we can divide the device by \textit{counts}, reserving a 'warm' area over which we will dispatch fast and short tasks.
+The implementation of this kind of behavior is similar to the one described in Section \ref{sect:highPriority}: we can divide the device by \textit{counts}, reserving a 'warm' area over which we will dispatch fast and short tasks.
 
 \subsubsection{Flowgraph and Pipeline Computation} \label{sect:pipelineScenario}
 
@@ -349,14 +353,15 @@ The implementation of this kind of behaviour is similar to the one described in 
  \label{fig:flow}
 \end{figurehere}
 
-Since device fission gives total control over task dispatching, we can use it to create complex structures like 
-
+Since device fission gives total control over task dispatching, we can use it to create complex structures like the one shown in \textbf{Figure \ref{fig:flow}}. This technique allows to create high-specialized virtual devices (like virtual hardware) for carrying out specific tasks and a good synchronization from the host must be provided. 
 
 \subsubsection{Maximize Throughput}
-This scenario applies when data sharing is very limited or completely absent, and the only important thing is to maintain high levels of throughput. To achieve this, a job must have \textit{all the resources} available for itself (i.e. all the on-chip caches), and no other jobs may interfere, therefore we must create \emph{one and only one} device for each NUMA node, so no device can "`overlap"' resources with another.
+This scenario applies when data sharing is very limited or completely absent, and the only important thing is to maintain high levels of throughput. To achieve this, a job must have \textit{all the resources} available for itself (i.e. all the on-chip caches), and no other jobs may interfere, therefore we must create \emph{one and only one} device for each NUMA node, so devices will never try to access the caches of other devices.\\
+To create this kind of partitioning Partition By Affinity must be used to fission the device into N sub-devices, where N is the number of NUMA node available.
 
-SISTEMARE.......Use Partition By Affinity to create N sub-devices one sub-device for each NUMA node.
-The sub-devices can then use all NUMA node's resources including all of the available cache.
+\vfill
+\columnbreak
+
 
 
 
