@@ -1,31 +1,35 @@
+\hyphenation{FPGA}
+\hyphenation{FPGAs}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Examples of OpencCL Applications}
 
 
 %------------------------------------------------------------------------------
-\subsection{OpenCL on FPGA platforms}
+\subsection{OpenCL for FPGA implementation}
+The great flexibility of OpenCL allows it to run on a great variety of different hardware and platforms. One interesting application, expecially in the field of embedded systems, is to use it as substitute of traditional HDLs (Hardware Description Languages) like VHDL or Verilog when FPGA programming is required.
 
 \subsubsection{OpenCL-FPGA Implementation}
 As we already saw, OpenCL applications consists of two part: the host and the kernels.
-FPGA flexibility allow the developer to opt for two solutions:
+When migrating to FPGA, the developer has to opt for two solutions:
 
 \begin{enumerate}
-	\item An "`All in One"' solution, by implementing the CPU that will run the standard C/C++ host code directly as a soft CPU inside the FPGA.
-	\item A separate solution, by using an external microprocessor for the host and by programming the FPGA to execute the kernels only.
+	\item An ``All in One solution'', by implementing the CPU that will run the standard C/C++ host code directly on the FPGA. (For example by using a soft macro provided by the microprocessor manufacturer)
+	\item A separated solution, by using an external microprocessor for the host and by programming the FPGA to execute the kernels only.
 	\end{enumerate}
 	
-Unlike CPUs and GPUs, where parallel threads can be executed on different cores, FPGAs offer a different strategy. Kernel functions can be transformed into dedicated and deeply pipelined \textbf{hardware circuits} that are inherently multithreaded using the concept of pipeline parallelism. Each of these pipelines can be replicated many times to provide even more parallelism than is possible with a single pipeline. This translates in an immediate boost in performance.\\
-Figure \ref {fig:fpga_example} shows a simple example of how kernels are translated into separate \textbf{hardware pipelines}.
+Unlike CPUs and GPUs, where parallel threads are executed on the different (and generic) cores available, FPGAs offer a different strategy. Kernel functions can be transformed into dedicated, specialized, and deeply pipelined \textbf{hardware circuits} that are inherently multithreaded thanks to the concept of pipeline parallelism. Each pipeline can then be replicated over the entire FPGA to provide even more parallelism. This two levels of parallelism translates into an immediate boost in performance.\\
+\textbf{Figure \ref {fig:fpga_example}} shows a simple example of how kernels are translated into separate, multiple \textbf{hardware pipelines}.
 	
 \begin{figurehere}
  \centering
  \includegraphics[width=8cm, height=4cm]{./eps/FPGA1.eps}
- \caption{FPGA implementation example}
+ \caption{Kernels are translated into multiple hardware pipelines, inherently providing two levels of parallelism: pipeline parallelism and thread level parallelism}
  \label{fig:fpga_example}
 \end{figurehere}
 
-The most important concept behind the OpenCL-to-FPGA compiler is the notion of \textbf{pipeline parallelism}.
-Basically, an OpenCL-to-FPGA compiler is able to implement the scenario observed in Section \ref{sect:pipelineScenario} in an automatic and more efficient way. We will describe how pipeline parallelism work by introducing an example, shown in Figure \ref{fig:fpga_example2}:
+The most important concept behind the OpenCL-to-FPGA approach is the notion of \textbf{pipeline parallelism}.
+Basically, an OpenCL-to-FPGA compiler is able to implement the scenario observed in Section \ref{sect:pipelineScenario} in an automatic and more efficient way. We will describe how pipeline parallelism work by introducing an example, shown in \textbf{Figure \ref{fig:fpga_example2}}:
 
 \begin{figurehere}
  \centering
@@ -37,7 +41,7 @@ Basically, an OpenCL-to-FPGA compiler is able to implement the scenario observed
 On the first clock cycle, thread 0 is clocked into the two load units. This indicates that they should begin fetching the first elements of data from arrays A and B. On the second clock cycle, thread 1 is clocked in
 at the same time that thread 0 has completed its read from memory and stored the results in the registers following the load units. On cycle 3, thread 2 is clocked in, thread 1 captures its returned data, and thread 0 stores the sum of the two values that it loaded. It is evident that in the steady state, all parts of the pipeline are active, with each stage processing a different thread.
 	
-To complete this section, we'll present a general scheme that summarize how OpenCL-FPGA applications are implemented (Figure \ref{fig:fpga_implementation}). One crucial point for parallel computation is the memory management, and as we can see from the figure several memory interfaces are needed, but luckily OpenCL-FPGA compilers are usually able to implement such interfaces automatically.
+In \textbf{Figure \ref{fig:fpga_implementation}} you can see a general scheme that summarizes how OpenCL-FPGA applications should be implemented. Since memory is shared between all the components, one crucial point in parallel computation is the memory management, and as we can see from the figure several memory interfaces are needed, but generally OpenCL-FPGA compilers are able to implement such interfaces automatically, exempting the developer from such tedious and delicate task.
 
 \begin{figurehere}
  \centering
@@ -48,22 +52,24 @@ To complete this section, we'll present a general scheme that summarize how Open
 
 \subsubsection{Benefits}
 
+Using OpenCL as a substitute of traditional HDLs can provide various benefits:
+
 \begin{itemize}
-	\item \textbf{Improved Time To Market:} OpenCL offers a quicker and simpler way to implement parallel alghorithms  compared to traditional FPGA development using lower level hardware description language (HDLs) such as Verilog or VHDL \cite {altera:FPGA}.  This because OpenCL inherently offers the ability to describe parallel computation, while the main challenge in HDLs languages was exactly to extract thread-level parallelism from a sequential program. OpenCL offers instead the ability to the programmer to explicitly specify and control parallelism.
-	\item \textbf{Better Performance:} Dedicated ad-hoc hardware structures allow faster computation than using generic CPUs. Furthermore OpenCL-FPGA compilers exploit pipeline parallelism to make computation even faster.
-	\item \textbf{Less Power Consumption:} Benchmarks show that FPGA applications consumes lot less power to execute the same OpenCL code in comparison to CPU or GPU.
+	\item \textbf{Improved Time To Market:} OpenCL offers a quicker and simpler way to implement parallel alghorithms  compared to traditional FPGA development using lower level hardware description language (HDLs) such as Verilog or VHDL \cite {altera:FPGA}.  This because OpenCL inherently offers the ability to describe parallel computation, while the main challenge in HDLs languages was exactly to extract thread-level parallelism from a sequential program. OpenCL offers instead the ability to the programmer to specify and control parallelism in an explicit and clear way.
+	\item \textbf{Better Performance:} Dedicated ad-hoc hardware structures allow faster computation than using generic CPUs. Furthermore OpenCL-FPGA compilers automatically exploit pipeline parallelism to make computation even faster.
+	\item \textbf{Less Power Consumption:} Benchmarks show that FPGA applications consumes lot less power to execute the same OpenCL code in comparison to CPU or GPU solutions.
 \end{itemize}
 
 \subsubsection{Case Study: Monte Carlo Black-Scholes Method}
 
 In this experiment an economic model was used to benchmark an OpenCL-FPGA unit. The model is based on the 
 Monte Carlo Black-Scholes method and it is used to compute the expected payoff of stock prices over millions of different paths. The entire algorithm used for this benchmark can be implemented in approximately 300 lines of
-OpenCL code that is portable from FPGA to CPU to GPU, and we can see the comparison in performance on these 3 different platforms in Table \ref{tab:FPGABenchmark}.
+OpenCL code that is portable from FPGA to CPU and GPU. The comparison in performance  between these 3 different platforms are shown in \textbf{Table \ref{tab:FPGABenchmark}}.\\
 
 \begin{tablehere}
 {\footnotesize
 \begin{tabular}{|p{1,0cm}|p{1,8cm}|p{1,8cm}|p{1,8cm}|}\hline
-\textbf{Platform} & \textbf{Power} [Watts] & \textbf{Performance} [Billions of simulations per seconds] & \textbf{Efficiency} [Millions of sims per second per watt]\\ \hline
+\textbf{Platform} & \textbf{Power} [Watts] & \textbf{Performance} [Billions of simulations per seconds] & \textbf{Efficiency} [Millions of simulations per second per watt]\\ \hline
 CPU & 130 & 0.032 & 0.0025 \\ \hline
 GPU & 212 & 10.1 & 48 \\ \hline
 FPGA & 45 & 12.0 & 266 \\ \hline
@@ -77,8 +83,8 @@ As we can see, not only the OpenCL framework targeting a FPGA board exceeds the 
 \subsubsection{Case Study: Document Filtering}
 
 In this benchmark the focus is set on a more practical problem than the previous, as it will consider an algorithm used in modern data centers.
-A recent report \cite{walsh:power} from International Data Corporation (IDC) examined the requirements of high performance computing data centers, and conducted a survey of the top constraints in expanding current data center capabilities. From the results, it was obvious that power and cooling costs are the key impediments of compute capability expansion, and as we have seen in the previous benchmark, FPGA computation offer an huge improvement in power consumption over CPUs and GPUs.\\
-In this experiment, a document filtering algorithm was implemented using OpenCL, and it basically involves looking at an incoming stream of documents and finding the ones that best match a user's interest. The results are shown in Table \ref{tab:FPGABenchmark2}:
+A recent report \cite{walsh:power} from International Data Corporation (IDC) examined the requirements of high performance computing data centers, and conducted a survey of the top constraints in expanding current data center capabilities. From the results, it was obvious that power and cooling costs are the key impediments of compute capability expansion, and as we have seen in the previous benchmark, FPGA computation offer an huge improvement in power consumption.\\
+In this experiment, a document filtering algorithm was implemented using OpenCL to program an FPGA. The algorithm basically consists in analyzing an incoming stream of documents and find the ones that best match a user's interest. The results are shown in \textbf{Table \ref{tab:FPGABenchmark2}}:\\
 
 \begin{tablehere}
 {\footnotesize
@@ -88,11 +94,11 @@ CPU & 130** & 2070 & 15.9 \\ \hline
 GPU & 215 & 3240 & 15.1 \\ \hline
 FPGA & 21 & 1755 & 83.6 \\ \hline
 \end{tabular}}
-  \caption{Document Filtering benchmark results\\ **Does not include memory consumption.}
+  \caption{Document Filtering benchmark results\\ **Does not include memory consumption.\\}
 	\label{tab:FPGABenchmark2}
 \end{tablehere}
 
-As we can see, although CPUs and GPUs can perform better in terms on throughput, the power efficiency of these two platform can be five time lower than the efficiency of FPGAs. It is interesting to note that in this case the performance of the FPGA was limited by the external memory bandwidth, and not by the FPGA itself. With a proper setup, the authors extimate a performance value of 2925 MT/s with the same power consumption, that would raise the power efficiency from 83.6 MT/J to 139,3 MT/J.
+As you can see, although CPUs and GPUs can perform better in terms on throughput, the power efficiency of these two platform can be five time lower than the efficiency of FPGAs. It is interesting to note that in this case the performance of the FPGA was limited by the external memory bandwidth, and not by the FPGA itself. With a proper setup, the authors of this test extimate an increase in performance up to 2925 MT/s maintaining the same power consumption level, that would raise the power efficiency value from 83.6 MT/J to 139,3 MT/J.\\
 These results demonstrate that introducing an FPGA OpenCL implementation of algorithms, could bring a dramatic decrease of power consumption and thus cooling costs in modern data centers.
 
 
@@ -100,22 +106,32 @@ These results demonstrate that introducing an FPGA OpenCL implementation of algo
 
 \subsection{TROVARE TITOLO}
 
-In the next example \cite{Pennycook2012} we'll analyze how OpenCL was used to re-implement an existing benchmarking algorithm to (NO! IN REALTA' E' PIU' LENTO! Scopo: unico source??)damatically increase its performances. This example is interesting because it also analyzes how the introduction of Device Fission allow to obtain even more considerable speedups.
+In the next example \cite{Pennycook2012} OpenCL was used to re-implement an existing benchmark algorithm to see how well it performas against the native implementation of the code. The results are very interesting and surprising, and they pave the way for a complete new point of reflection.\\
+The second part of the experiment shows instead how the introduction of Device Fission to better use the memory allow to obtain considerable speedups over the unmanaged version of the same code.
 
 \subsubsection{Background: the LU algorithm}
 
 LU is an application level benchmark part of the NPB Suite (NAS Parallel Benchmark) that consists in a series of parallel aerodynamic simulations designed by NASA. LU is short for Lower-Upper Gauss-Seidel solver and the algorithm is basically a simplified Navier-Stokes equation solver that uses three-dimensional data grid for its calculations. The size of these data cubes is always \begin{math}N^3\end{math}, and for the purpose of this example we'll focus only on three specific classes of problems: Class A problems (size \begin{math}64^3\end{math}), Class B problems (size \begin{math}102^3\end{math}) and Class C problems (size \begin{math}162^3\end{math}).
-To perform the calculations, each cube of size (n X n X n) is divided into 2D "`slices"' of size (n X n X 1), and each "`slice"' is assigned to a different processor for computation. This algorithm is further optimized used a technique called \textit{k-blocking}; Figure \ref{dataCubes} shows a visual representation of how data is explored, as you can see each block must wait for the adjacent block to be completely computed (black blocks)before they can start.
+To perform the calculations, each cube of size \begin{math}n\times n\times n\end{math} is divided into 2D ``slices'' of size \begin{math}n\times n\times 1\end{math}, and each ``slice'' is assigned to a different processor for computation. This algorithm is further optimized used a technique called \textit{k-blocking}; \textbf{Figure \ref{fig:dataCubes}} shows a visual representation of how data is explored, as you can see each block must wait for the adjacent block to be completely computed (the black ones) before computation can start.\\
 
 \begin{figurehere}
  \centering
- \includegraphics[width=8cm, height=4cm]{./eps/dataCube.eps}
+ \includegraphics[width=8cm]{./eps/dataCube.eps}
  \caption{Data cubes used in the LU algorithm}
  \label{fig:dataCubes}
 \end{figurehere}
 
 
 \subsubsection{The Experiment}
+
+\textbf{Table \ref{tab:LUBenchmark1}} shows a list of the devices used in the experiment. One important aspect of OpenCL to note is its \textbf{code portability}: the same source code can be used on different devices with different numbers of cores and processing units, as OpenCL is able to scale over them automatically. This property of OpenCl is not to be underevaluated and it already offers many benefits:\\
+
+\begin{itemize}
+	\item it is easier to maintain a single code that targets all platforms, as opposed to separate hand-tuned versions of the same code for each alternative platform.
+	\item it reduces the risk of being locked into a single vendor solution.
+	\item benchmarking is simplified, as the results can be compared from a single code source.
+	\item it represents a ``safer'' investment for computing sites, as new codes (and ported legacy codes) will run on both existing and future architectures.
+\end{itemize}
 
 \begin{tablehere}
 {\footnotesize
@@ -127,20 +143,11 @@ NVIDIA Tesla C1060 (GPU) & 30 & 240 \\ \hline
 NVIDIA Tesla C2050 (GPU) & 14 & 448 \\ \hline
 AMD/ATI FirePro V7800 (GPU) & 18 & 1440 \\ \hline
 \end{tabular}}
-  \caption{Platform used for the experiment}
+  \caption{Platforms used in the experiment.\\}
 	\label{tab:LUBenchmark1}
 \end{tablehere}
 
-Table \ref{tab:LUBenchmark1} shows a list of devices used in the experiment. One important aspect to note of OpenCl is its code portability: a single source can be used on different devices with different numbers of cores processing units, as OpenCL is able to scale automatically. This, for starters, already offers many benefits:
-
-\begin{itemize}
-	\item it is easier to maintain a single code that targets all platforms, as opposed to separate hand-tuned versions of the same code for each alternative platform.
-	\item it reduces the risk of being locked into a single vendor solution.
-	\item benchmarking is simplified, as the results can be compared from a single code source.
-	\item it represents a "`safer"' investment for computing sites, as new codes (and ported legacy codes) will run on both existing and future architectures.
-\end{itemize}
-
-The goal of the experiment was to consider the performances of OpenCL implementation of LU against native FORTRAN77 (for CPUs) and CUDA (for GPUs). Figure \ref{fig:OpenCLvsFORTRAN77} shows the results for the comparison of the OpenCL implementation against the native FORTRAN77 implementation compiled using different compilers.
+The goal of the first tests was to analyze the performances of OpenCL implementation of LU against native FORTRAN77 (for CPUs) and CUDA (for GPUs) implementations.\\ \textbf{Figure \ref{fig:OpenCLvsFORTRAN77}} shows the results of the comparison between OpenCL and FORTRAN77. Each implementation was compiled using two different compilers for each approach.
 
 \begin{figurehere}
  \centering
@@ -149,8 +156,15 @@ The goal of the experiment was to consider the performances of OpenCL implementa
  \label{fig:OpenCLvsFORTRAN77}
 \end{figurehere}
 
-As we can see the advantage of OpenCL (if any) is very marginal, and in the case of the Sun Studio compiler, the FORTRAN77 implementation performs way better. This result is very interesting because it demonstrates that \emph{OpenCL is not always the best option in term of performance}. The reason of this ``failure'' could be attributed to the fact that the FORTRAN compiler is very mature and has a long story of optimizations and fine-tuning behind it, while OpenCL standard is quite young.
-Let's now see how OpenCL perform against another GPGPU implementation (CUDA), the results are shown in Figure \ref{fig:OpenCLvsCUDA}:
+As we can see from the graph the advantage of OpenCL (if any) is very marginal, and in the case of the Sun Studio compiler, the FORTRAN77 implementation performs way better. This result is very interesting because it demonstrates two things:
+
+\begin{enumerate}
+	\item that \emph{OpenCL is not always the best option in term of performance}
+	\item that the compiler used can play a very important role
+\end{enumerate}
+
+The reason of this OpenCL ``failure'' could be indeed attributed to the fact that the FORTRAN compiler is very mature and has a long story of optimizations and fine-tuning behind it, while OpenCL standard is quite young; and another interesting thing that can be seen from the graph is that there is practically no difference in performance between the two versions of the OpenCL implementation, and this means that no compiler is better optimized that the other.\\
+Let's now see how OpenCL perform against the CUDA implementation (GPU), the results are shown in \textbf{Figure \ref{fig:OpenCLvsCUDA}}:\\
 
 \begin{figurehere}
  \centering
@@ -163,30 +177,30 @@ As we can see even in this case the CUDA implementation performs a little better
 
 \subsubsection{Introducing Device Fission}
 
-The same benchmark will now be ran using device fissioning to exploit either temporal or spatial cache locality and therefore use the shared memory in a more efficient way. Previous executions of the benchmark were unlikely to exhibit good memory behaviour, because basic OpenCL implementation has no control over which processing unit the work items will be allocated.
-The LU benchmark will be executed over 2 different configurations created with device fissioning (Figure \ref{fig:LU_deviceFissionConfig}): two subdevices with 6 compute units each and 4 devices with 3 compute units each.
+The same benchmark will now be ran using device fissioning to exploit either temporal or spatial cache locality and therefore use the shared memory in a more efficient way. Previous executions of the benchmark were \emph{unlikely to exhibit good memory behaviour}, because basic OpenCL implementation has no control over which processing unit the work items will be allocated.\\
+In the new test setup, the LU benchmark will be executed over 2 different configurations created with device fissioning (\textbf{Figure \ref{fig:LU_deviceFissionConfig}}): two subdevices with 6 compute units each and 4 devices with 3 compute units each.
 
 \begin{figurehere}
  \centering
- \includegraphics[width=8cm, height=4cm]{./eps/LU_deviceFissionConfig.eps}
- \caption{The configurations created with device fission}
+ \includegraphics[width=8cm]{./eps/LU_deviceFissionConfig.eps}
+ \caption{The two configurations used in the device fission tests}
  \label{fig:LU_deviceFissionConfig}
 \end{figurehere}
 
-The results of the test are listed in Table \ref{tab:LUDeviceFission}, and they clearly suggest that device fission can provide significant performance improvements when used and configured properly. \\
+The results of the test are listed in \textbf{Table \ref{tab:LUDeviceFission}}, and they clearly suggest that device fission can provide significant performance improvements when used and configured properly, with an average speedup of 2.56x. \\
 
 \begin{tablehere}
 {\footnotesize
 \begin{tabular}{|p{1,7cm}|p{1,7cm}|p{1,7cm}|p{1,7cm}|}
 \hline
        Num of Cores		& \multicolumn{1}{|p{1,55cm}}{With Device Fission}& \multicolumn{1}{|p{1,55cm}}{Witout Device Fission}& \multicolumn{1}{|p{1,55cm}|}{Speedup} \\ \hline
-\multicolumn{1}{|l}{Configuration 1} & \multicolumn{1}{c}{}  & \multicolumn{1}{c}{}  & \multicolumn{1}{c|}{}  \\ \hline
+\multicolumn{1}{|l}{\textbf{Configuration 1}} & \multicolumn{1}{c}{}  & \multicolumn{1}{c}{}  & \multicolumn{1}{c|}{}  \\ \hline
       24  & \multicolumn{1}{|c}{568.56} & \multicolumn{1}{|c}{1158.60} & \multicolumn{1}{|c|}{2.03x} \\ \hline
 			48  & \multicolumn{1}{|c}{397.41} & \multicolumn{1}{|c}{760.73} & \multicolumn{1}{|c|}{1.92x} \\ \hline
       96  & \multicolumn{1}{|c}{276.68} & \multicolumn{1}{|c}{503.25} & \multicolumn{1}{|c|}{1.81x} \\ \hline
       384  & \multicolumn{1}{|c}{123.75} & \multicolumn{1}{|c}{n.a.} & \multicolumn{1}{|c|}{n.a.} \\ \hline
 
-\multicolumn{1}{|l}{Configuration 2} & \multicolumn{1}{l}{}  & \multicolumn{1}{l}{}  & \multicolumn{1}{l|}{}  \\ \hline
+\multicolumn{1}{|l}{\textbf{Configuration 2}} & \multicolumn{1}{l}{}  & \multicolumn{1}{l}{}  & \multicolumn{1}{l|}{}  \\ \hline
       12  & \multicolumn{1}{|c}{622.27} & \multicolumn{1}{|c}{1884.87} & \multicolumn{1}{|c|}{3.02x} \\ \hline
 			24  & \multicolumn{1}{|c}{394.63} & \multicolumn{1}{|c}{1158.60} & \multicolumn{1}{|c|}{2.93x} \\ \hline
       48  & \multicolumn{1}{|c}{250.84} & \multicolumn{1}{|c}{760.73} & \multicolumn{1}{|c|}{3.03x} \\ \hline
@@ -195,6 +209,14 @@ The results of the test are listed in Table \ref{tab:LUDeviceFission}, and they 
   \caption{Runtimes (in seconds) for two device fission configurations.}
 	\label{tab:LUDeviceFission}
 \end{tablehere}
+
+\subsubsection{Conclusions}
+Even if at a first glance the results of this experiments may seem disappointing (OpenCL failed against FORTRAN and CUDA),
+it brought to light one interesting point about OpenCL implementations: compiler optimization.
+The main problem when using OpenCL is that calls to its functions are made by way of a library, and therefore the operation of these functions may not be necessarily defined until runtime, and this restricts the optimisation freedom of the host compiler. One solution to this problem may be a compiler that analyzes both the host \emph{and} the OpenCL code at the same time, producing an optimized but \emph{platform specific} code. Thus there is a conflict between potential compiler optimization and the vast code portability already provided by OpenCL: optimizing the compiler would make the code less portable.\\
+The second part of the experiment shown instead a practical example on the strenght of device fission, as it could indeed offer the possibility to better manage the resources available and produce more performant code.
+
+
 
 %---------------------------------------------------------------------------------------------------
 
