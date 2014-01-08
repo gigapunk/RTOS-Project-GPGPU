@@ -217,25 +217,23 @@ The main problem when using OpenCL is that calls to its functions are made by wa
 The second part of the experiment shown instead a practical example on the strenght of device fission, as it could indeed offer the possibility to better manage the resources available and produce more performant code.
 
 
-
 %---------------------------------------------------------------------------------------------------
 
 \subsection{OpenCL remote clustering}
-In this section we'll present an interesting example \cite{mosix:virtualcl} about how OpenCL can be used in a distributed and \emph{heterogeneous} computer environment that can provide an opportunity to dramatically increase the performance of parallel and High-Performance Computing applications on clusters, by \emph{combining} traditional multi-core CPUs, general-purpose GPUs and Accelerator devices. One limitation of parallel computing using OpenCL is that most applications, run their device-specific code (the kernels) only locally on devices of the same computer were the hosts application runs.\\
-Previous studies already demonstrated \cite{barak:heterogeneous} that OpenMP (one of the two main paradigms for HPC application developing) can be extended to use a heterogeneous cluster environment: while the CPU part of the application runs on one node, the GPU kernels run on cluster-wide devices.
+In this section we'll present an interesting example \cite{mosix:virtualcl} on how OpenCL can be used in a \emph{distributed} and \emph{heterogeneous} computer environment that can provide an opportunity to increase the performance of parallel and High-Performance Computing applications on clusters, by combining traditional multi-core CPUs, general-purpose GPUs and Accelerator devices.\\
+One limitation of parallel computing using OpenCL is that most applications run their device-specific code (the kernels) only locally on the same computer were the hosts application runs.\\
+Previous studies in this sector have already been made, and it has been demonstrated \cite{barak:heterogeneous} that OpenMP (one of the main paradigms for HPC parallel programming) can be extended to use a heterogeneous cluster environment by letting the CPU portion of the application run on one local node, and the GPU kernels on cluster-wide remote devices. In this example we will present a first attempt to extend OpenCL in a similar way.
 
 \subsubsection{The VirtualCL Cluster Platform}
-VirtualCL (VCL) is a wrapper developed by the authors of this study that allows most unmodified applications
-to transparently utilize many OpenCL devices in a cluster as if all the devices are on the local computer.
-The idea behind the platform is that it provides to the application the impression of a single host with many devices. Users can start a parallel application on a hosting computer, then VCL manages and transparently runs
-the kernels of the application on different nodes.
-VCL is composed of three main components: the VCL library, the broker and the back-end daemon.
-The \textbf{VCL library} is a cluster-wide front-end for OpenCL that gives applications transparent access to cluster-wide openCL devices, hiding the actual location of the devices from the calling executable.
-The \textbf{broker} is a daemon-process connected with the library via a UNIX socket that runs on every host computer. Its main tasks are to monitor for existence and availability of OpenCL devices in the cluster, to allocate them, and to authenticate and route messages between the applications and the back-ends.
-While the brocker daemon runs on each host computer, the \textbf{back-end daemon} runs on each cluster node. Its goal is to run kernels on behalf of the client application.
+VirtualCL (VCL) is an OpenCL wrapper that allows most applications to transparently utilize remote OpenCL devices as if they all resided on the same local computer.\\
+The basic idea behind this platform is to provide to the application the impression of having of a single host with many local devices, no matter where they phisically are. Users can launch the OpenCL executable on the host computer, then VCL manages and transparently runs the kernels on the different nodes available.
+VCL is composed of three main components: the VCL library, the broker and the back-end daemon.\\
+The \textbf{VCL library} is a cluster-wide front-end for OpenCL that gives applications transparent access to openCL devices in the cluster, hiding their actual location from the calling executable.\\
+The \textbf{broker} is a daemon-process connected with the library via a UNIX socket that runs on every host computer. Its main tasks are to monitor for existence and availability of OpenCL devices in the cluster, to allocate them, and to authenticate and route messages between the applications and the back-ends.\\
+The \textbf{back-end daemon} runs on each cluster node (and not the on the host, like the broker) and its goal is to execute kernels on behalf of the client application.
 
 \subsubsection{VCL Performances}
-One of the main factors that have to be taken in account is the overhead introduced by the VCL model. To measure it it is sufficient to measure the time taken by an application to run a sequence of identical kernels using the native OpenCL library and the times to run the same kernels with VCL on local and remote devices; results are shown in Table \ref{tab:VCLOverhead} and it is clear that the difference between local and remote use of VCL is very small and almost independent from the size of the buffer used.\\
+One of the main factors that have to be taken into account when using a wrapper model like VCL is the \textbf{overhead} introduced. To measure it it is sufficient to measure the time taken by the application to run a sequence of identical kernels using the native OpenCL library locally and then the time to run the same kernels with VCL both on local and remote devices. The results for overhead testing are shown in \textbf{Table \ref{tab:VCLOverhead}} and it is clear that the difference between local and remote use of VCL is very small (about 80 milliseconds) and almost independent from the size of the buffer used.\\
 
 \begin{tablehere}
 {\footnotesize
@@ -251,15 +249,15 @@ One of the main factors that have to be taken in account is the overhead introdu
 64 MB & 1354 & 33 & 112 \\ \hline
 256 MB & 4993 & 37 & 111 \\ \hline
 \end{tabular}}
-  \caption{VCL overhead results.}
+  \caption{VCL overhead results.\\}
 	\label{tab:VCLOverhead}
 \end{tablehere}
 
-The next step is to measure how VCL platform actually performs using benchmark applications. To run the test, applications from the SHOC (Scalable HeterOgeneous Computing) benchmark suite were used, and once again the execution time was measured first for native OpenCL implementation, and then for local and remote VCL implementation. The results are presented in Table \ref{tab:VCLBenchmark}.\\
+The next step is to measure how VCL actually performs using benchmark applications. To run the test, executables from the SHOC (Scalable HeterOgeneous Computing) benchmark suite were used, and once again the execution time was measured first for native OpenCL implementation, and then for local and remote VCL implementation. The results are presented in \textbf{Table \ref{tab:VCLBenchmark}}.\\
 
 \begin{tablehere}
 {\footnotesize
-\begin{tabular}{|p{1,65cm}|p{1,65cm}|p{1,65cm}|p{1,65cm}|}\hline
+\begin{tabular}{|p{2,15cm}|p{1,3cm}|p{1,3cm}|p{1,3cm}|}\hline
 \textbf{Application} & \textbf{Native Time} [sec] & \textbf{VCL Time (Local)} [sec] & \textbf{VCL Time (Remote)} [sec]\\ \hline
 BusSpeedDownload & 0.89 & 0.88 & 0.88 \\ \hline
 BusSpeedReadback & 0.91 & 0.89 & 0.89 \\ \hline
@@ -278,7 +276,7 @@ Stencil2D & 11.65 & 12.48 & 18.94 \\ \hline
 Triad & 6.01 & 11.83 & 53.37 \\ \hline
 S3D & 32.39 & 32.68 & 33.17 \\ \hline
 \end{tabular}}
-  \caption{VCL benchmark results.}
+  \caption{VCL benchmark results.\\}
 	\label{tab:VCLBenchmark}
 \end{tablehere}
 
