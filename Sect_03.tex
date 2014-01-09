@@ -2,7 +2,7 @@
 \hyphenation{FPGAs}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Examples of OpencCL Applications}
+\section{Real World Examples and Case Studies of OpencCL and Device Fission Applications}
 
 
 %------------------------------------------------------------------------------
@@ -104,9 +104,9 @@ These results demonstrate that introducing an FPGA OpenCL implementation of algo
 
 %-----------------------------------------------------------------------------
 
-\subsection{TROVARE TITOLO}
+\subsection{Investigating performance portability of OpenCL}
 
-In the next example \cite{Pennycook2012} OpenCL was used to re-implement an existing benchmark algorithm to see how well it performas against the native implementation of the code. The results are very interesting and surprising, and they pave the way for a complete new point of reflection.\\
+In the next example \cite{Pennycook2012} OpenCL was used to re-implement an existing benchmark algorithm to see how well it performs against the native implementation of the code. The results are very interesting and surprising, and they pave the way for a complete new point of reflection.\\
 The second part of the experiment shows instead how the introduction of Device Fission to better use the memory allow to obtain considerable speedups over the unmanaged version of the same code.
 
 \subsubsection{Background: the LU algorithm}
@@ -175,7 +175,7 @@ Let's now see how OpenCL perform against the CUDA implementation (GPU), the resu
 
 As we can see even in this case the CUDA implementation performs a little better, and the reason in still to be searched into specific optimizations offered by the CUDA compiler for NVIDIA boards.
 
-\subsubsection{Introducing Device Fission}
+\subsubsection{Introducing Device Fission} \label{sect:LUDeviceFission}
 
 The same benchmark will now be ran using device fissioning to exploit either temporal or spatial cache locality and therefore use the shared memory in a more efficient way. Previous executions of the benchmark were \emph{unlikely to exhibit good memory behaviour}, because basic OpenCL implementation has no control over which processing unit the work items will be allocated.\\
 In the new test setup, the LU benchmark will be executed over 2 different configurations created with device fissioning (\textbf{Figure \ref{fig:LU_deviceFissionConfig}}): two subdevices with 6 compute units each and 4 devices with 3 compute units each.
@@ -233,7 +233,7 @@ The \textbf{broker} is a daemon-process connected with the library via a UNIX so
 The \textbf{back-end daemon} runs on each cluster node (and not the on the host, like the broker) and its goal is to execute kernels on behalf of the client application.
 
 \subsubsection{VCL Performances}
-One of the main factors that have to be taken into account when using a wrapper model like VCL is the \textbf{overhead} introduced. To measure it it is sufficient to measure the time taken by the application to run a sequence of identical kernels using the native OpenCL library locally and then the time to run the same kernels with VCL both on local and remote devices. The results for overhead testing are shown in \textbf{Table \ref{tab:VCLOverhead}} and it is clear that the difference between local and remote use of VCL is very small (about 80 milliseconds) and almost independent from the size of the buffer used.\\
+One of the main factors that have to be taken into account when using a wrapper model like VCL is the \textbf{overhead} introduced by it. To evaluate it it is sufficient to measure the time taken by the application to run a sequence of identical kernels using the native OpenCL library locally and then the time to run the same kernels with VCL both on local and remote devices. The results for overhead testing are shown in \textbf{Table \ref{tab:VCLOverhead}} and it is clear that the difference between local and remote use of VCL is very small (about 80 milliseconds) and almost independent from the size of the buffer used.\\
 
 \begin{tablehere}
 {\footnotesize
@@ -253,7 +253,7 @@ One of the main factors that have to be taken into account when using a wrapper 
 	\label{tab:VCLOverhead}
 \end{tablehere}
 
-The next step is to measure how VCL actually performs using benchmark applications. To run the test, executables from the SHOC (Scalable HeterOgeneous Computing) benchmark suite were used, and once again the execution time was measured first for native OpenCL implementation, and then for local and remote VCL implementation. The results are presented in \textbf{Table \ref{tab:VCLBenchmark}}.\\
+The next step is to measure how VCL actually performs using benchmark applications. To run the test, executables from the SHOC (Scalable Heterogeneous Computing) benchmark suite were used, and once again the execution time was measured first for native OpenCL implementation, and then for local and remote VCL implementation. The results are presented in \textbf{Table \ref{tab:VCLBenchmark}}.\\
 
 \begin{tablehere}
 {\footnotesize
