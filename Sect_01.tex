@@ -2,12 +2,12 @@
 \section{GPGPU Introduction}
 
 GPGPU (\textit{General Purpose computation on Graphics Processor Unit}), also known as \textit{GPU Computing}, is the utilization of the graphic adapter of a personal computer to perform generic and non-graphic related computation that is usually handled by the CPU.\\
-Once designed and optimized specifically to perform only fixed graphic calculations, modern GPUs are evolving into \emph{high-performances many-core} processors that can be virtually used to perform any task, and developers who port their applications to GPUs are able to achieve speedups of orders of magnitude vs. optimized CPU implementations of the same code.\cite{GPGPUORG:About}\\
+Once designed and optimized specifically to perform only fixed graphic calculations, modern GPUs are evolving into \emph{high-performances many-core} processors that can be virtually used to perform any task, and developers who port their applications to GPUs are able to achieve speedups of orders of magnitude vs. optimized CPU implementations of the same code.\cite{GPGPUORG:About}
 The reason why GPUs are so fast has to be searched in the nature of what graphic rendering is about, that is an \emph{intensive parallel computation}: GPUs are engineered to work specifically on \emph{parallel data processing}, rather than data caching, flow control and pipelined execution like CPUs. (\textbf{Figure \ref{fig:cpuvsgpu_scheme}})
 
 \begin{figurehere}
  \centering
- \includegraphics[width=8cm, height=4cm]{./eps/GPU_CPU_struct.eps}
+ \includegraphics[width=8cm, height=3.8cm]{./eps/GPU_CPU_struct.eps}
  \caption{GPUs are more focused to computation rather than data caching.}
  \label{fig:cpuvsgpu_scheme}
 \end{figurehere}
